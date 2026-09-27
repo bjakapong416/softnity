@@ -1,0 +1,109 @@
+/* ================= UI v5 · modern glass HUD ================= */
+body.ui5{ --g-bg:rgba(14,20,38,.58); --g-bg2:rgba(14,20,38,.78); --g-line:rgba(255,255,255,.14); --g-hi:rgba(255,255,255,.08); --acc:#5de0e6; --acc2:#7c8cff; --gold2:#ffd76a; --txt:#f3f6ff; --sub:#b7c2e0; }
+body.ui5 #ui, body.ui5 .win{ font-family:"Prompt","Chakra Petch",system-ui,sans-serif; }
+body.ui5 .glass, body.ui5 #ui #info, body.ui5 #ui #mapbox, body.ui5 #ui #chat, body.ui5 .frame{
+  background:var(--g-bg); border:1px solid var(--g-line); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.28), inset 0 1px 0 var(--g-hi);
+  -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%); }
+body.ui5 .frame::before, body.ui5 .frame::after{ display:none !important; }
+/* player card (top-left) */
+body.ui5 #ui #info{ left:14px; top:12px; width:300px; padding:10px 12px; display:grid; grid-template-columns:64px 1fr; grid-template-rows:auto auto; gap:2px 12px; align-items:center; }
+body.ui5 #info .pf{ grid-row:1 / span 2; width:64px; }
+body.ui5 #ui #avatarWrap{ width:64px; height:64px; border-radius:50%; background:radial-gradient(circle at 50% 30%,#3a4f8f,#141d3a 75%); box-shadow:0 0 0 2px rgba(255,255,255,.18), 0 0 0 4px rgba(93,224,230,.35); }
+body.ui5 #info .pw{ margin-top:-12px; background:rgba(10,14,28,.85); border:1px solid var(--g-line); font:600 11px "Prompt"; border-radius:10px; }
+body.ui5 #info .bj{ flex-direction:row; gap:6px; grid-column:2; grid-row:1; justify-self:end; align-self:start; margin-top:-2px; }
+body.ui5 .hex{ width:auto; height:20px; clip-path:none; border-radius:10px; flex-direction:row; gap:4px; padding:0 8px; font-size:12px; }
+body.ui5 .hex small{ font:600 9px "Prompt"; opacity:.85; } body.ui5 .hex b{ font:700 12px "Prompt"; }
+body.ui5 .hex.base{ background:linear-gradient(135deg,#5b7cff,#3a4fd1); } body.ui5 .hex.job{ background:linear-gradient(135deg,#f5b94a,#d98a1c); }
+body.ui5 #info .pinfo{ grid-column:2; grid-row:1 / span 2; width:auto; gap:5px; padding-top:0; }
+body.ui5 #info .pinfo .nm{ text-shadow:none; gap:8px; } body.ui5 #info .pinfo strong{ font:600 15px "Prompt"; }
+body.ui5 #info .pinfo #pJob{ font:500 11px "Prompt"; color:#0b1330; background:var(--acc); border-radius:8px; padding:1px 7px; }
+body.ui5 #ui .bar{ height:10px; border-radius:6px; background:rgba(255,255,255,.1); border:0; box-shadow:none; overflow:hidden; }
+body.ui5 #ui .bar i{ border-radius:6px; } body.ui5 #ui .bar.hp i{ background:linear-gradient(90deg,#ff5f6d,#ff9a5a); } body.ui5 #ui .bar.sp i{ background:linear-gradient(90deg,#4f8dff,#5de0e6); }
+body.ui5 #ui .bar span{ font:600 9.5px/10px "Prompt"; text-shadow:0 1px 1px rgba(0,0,0,.6); }
+body.ui5 #buffs{ left:18px; top:112px; }
+/* currency + map name + ticker (top centre) */
+body.ui5 #ui #currency{ top:12px; gap:8px; }
+body.ui5 .cur{ background:var(--g-bg); border:1px solid var(--g-line); border-radius:20px; min-width:112px; padding:3px 4px 3px 8px; font:600 13px "Prompt"; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+body.ui5 .cur button{ background:rgba(255,255,255,.14); width:20px; height:20px; }
+body.ui5 #mapBanner{ top:46px; } body.ui5 #mapBanner .mapname{ font:600 14px "Prompt"; letter-spacing:.3px; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+body.ui5 #mapBanner .mapname::before, body.ui5 #mapBanner .mapname::after{ width:26px; height:1px; }
+body.ui5 #ticker{ top:74px; } body.ui5 .tk-view{ background:linear-gradient(90deg,rgba(14,20,38,0),rgba(14,20,38,.62) 12%,rgba(14,20,38,.62) 88%,rgba(14,20,38,0)); border-radius:12px; }
+/* main menu (top-right, one glass pill) */
+body.ui5 #ui #topbar{ display:flex; top:12px; right:14px; left:auto; flex-direction:row; gap:2px; padding:6px 8px; border-radius:18px; background:var(--g-bg); border:1px solid var(--g-line); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); box-shadow:0 8px 24px rgba(0,0,0,.25); }
+body.ui5 #ui #topbar .tb{ width:56px; padding:2px 0; border-radius:12px; transition:background .15s, transform .15s; }
+body.ui5 #ui #topbar .tb:hover{ background:rgba(255,255,255,.1); transform:translateY(-1px); }
+body.ui5 #ui #topbar .tb .ic{ width:34px; height:34px; } body.ui5 #ui #topbar .tb .ic img{ width:30px; height:30px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+body.ui5 #ui #topbar .tb label{ font:500 10.5px "Prompt"; color:var(--sub); text-shadow:none; margin-top:1px; }
+body.ui5 #ui #topbar .badge{ top:-2px; right:6px; min-width:16px; height:16px; font:600 10px/16px "Prompt"; border:0; background:#ff4d6d; box-shadow:0 0 0 2px rgba(14,20,38,.9); }
+/* minimap (under the menu) */
+body.ui5 #ui #mapbox{ top:84px; right:14px; width:184px; padding:8px; }
+body.ui5 #ui #mapbox canvas#minimap{ width:100% !important; height:auto !important; border-radius:12px; border:0; }
+body.ui5 #ui #mapbox .mapname, body.ui5 #ui #mapbox .coord{ font-family:"Prompt"; }
+body.ui5 #ui #mapbox .mapbtns button{ border-radius:10px; background:rgba(10,14,28,.7); border:1px solid var(--g-line); }
+/* quest tracker + DPS (right, under minimap) */
+body.ui5 #questTrack{ left:auto; right:14px; bottom:auto; top:300px; align-items:flex-end; }
+body.ui5 .qt{ background:var(--g-bg); border:1px solid var(--g-line); border-radius:14px; padding:8px 12px 8px 8px; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); min-width:220px; }
+body.ui5 .qt-ic{ width:34px; height:34px; border-radius:10px; box-shadow:none; background:linear-gradient(135deg,#ffe8a3,#f5b94a); }
+body.ui5 .qt-tx b{ font:600 13px "Prompt"; color:var(--gold2); text-shadow:none; } body.ui5 .qt-tx small{ font:400 12px "Prompt"; text-shadow:none; color:var(--txt); }
+body.ui5 #dps{ font:600 13px "Prompt"; font-style:normal; background:linear-gradient(90deg,rgba(124,140,255,0),rgba(124,140,255,.75)); padding:3px 12px; border-radius:10px; }
+body.ui5 #gainFeed{ left:auto; right:250px; bottom:auto; top:300px; align-items:flex-end; } body.ui5 .gf{ font:600 12px "Prompt"; }
+body.ui5 #rightBtns{ display:none; }
+/* skills (bottom-right cluster) */
+body.ui5 #skillbar{ left:auto; right:18px; bottom:22px; transform:none; align-items:flex-end; }
+body.ui5 .sb-auto{ font:500 12.5px "Prompt"; font-style:normal; color:var(--sub); background:var(--g-bg); padding:3px 12px; border-radius:12px; border:1px solid var(--g-line); text-shadow:none; }
+body.ui5 .sb-auto.on{ color:#9dffb8; border-color:rgba(157,255,184,.4); }
+body.ui5 .sb-row{ display:grid; grid-template-columns:repeat(5,52px) 88px; grid-template-rows:52px 88px; gap:10px; align-items:end; justify-items:center; }
+body.ui5 .sb-sep{ display:none; }
+body.ui5 #skillbar .ws{ width:52px; height:52px; border-radius:50%; background:rgba(14,20,38,.62); border:1px solid rgba(255,255,255,.2); box-shadow:0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.1); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+body.ui5 #skillbar .ws:hover{ border-color:var(--acc); }
+body.ui5 #skillbar .ws .k{ top:-6px; right:-4px; left:auto; transform:none; font:600 9.5px "Prompt"; background:rgba(10,14,28,.9); border:1px solid var(--g-line); border-radius:8px; padding:0 5px; }
+body.ui5 #skillbar .ws .lab{ font:500 10px "Prompt"; bottom:-15px; text-shadow:0 1px 2px #000; }
+body.ui5 #skillbar [data-slot="0"]{ grid-area:1/1; } body.ui5 #skillbar [data-slot="1"]{ grid-area:1/2; } body.ui5 #skillbar [data-slot="2"]{ grid-area:1/3; } body.ui5 #skillbar [data-slot="3"]{ grid-area:1/4; }
+body.ui5 #skillbar #pickBtn{ grid-area:1/5; } body.ui5 #skillbar #botBtn2{ grid-area:1/6; width:56px; height:52px; border-radius:26px; }
+body.ui5 #skillbar [data-sk="0"]{ grid-area:2/2; align-self:end; } body.ui5 #skillbar [data-sk="1"]{ grid-area:2/3; align-self:end; } body.ui5 #skillbar [data-sk="2"]{ grid-area:2/4; align-self:end; }
+body.ui5 #skillbar .ws.lock{ grid-area:2/5; align-self:end; opacity:.6; }
+body.ui5 #skillbar [data-sk]{ width:60px; height:60px; border-color:rgba(124,140,255,.55); }
+body.ui5 #skillbar #atkBtn{ grid-area:2/6; width:88px; height:88px; border-radius:50%; background:radial-gradient(circle at 50% 35%,rgba(93,224,230,.35),rgba(14,20,38,.75) 70%); border:2px solid rgba(93,224,230,.7); box-shadow:0 0 0 6px rgba(93,224,230,.12), 0 10px 22px rgba(0,0,0,.35); }
+body.ui5 #skillbar #atkBtn img.pxi{ width:50px; height:50px; }
+body.ui5 #skillbar #botBtn2.on, body.ui5 #skillbar #botBtn2[aria-pressed="true"]{ border-color:#9dffb8; box-shadow:0 0 16px rgba(157,255,184,.5); }
+body.ui5 #skillbar .ws.item .nm{ font:500 9.5px "Prompt"; }
+body.ui5 #skillbar .ws.item .q, body.ui5 #skillbar .ws .qty{ font:600 10px "Prompt"; }
+body.ui5 #ui #sitBtn, body.ui5 #ui #emoteBtn{ top:auto; right:auto; left:14px; width:44px; height:44px; border-radius:50%; background:var(--g-bg); border:1px solid var(--g-line); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+body.ui5 #ui #sitBtn{ bottom:170px; } body.ui5 #ui #emoteBtn{ bottom:222px; } body.ui5 #ui #emoteMenu{ left:66px; right:auto; top:auto; bottom:222px; }
+/* chat (bottom-centre) */
+body.ui5 #ui #chat{ left:50%; transform:translateX(-50%); bottom:18px; width:min(520px,calc(100vw - 720px)); min-width:360px; padding:0; overflow:hidden; }
+body.ui5 #ui #chatTabs{ padding:6px 8px 4px; gap:4px; background:none; border:0; }
+body.ui5 #ui #chatTabs button.tab{ border-radius:10px; border:0; background:rgba(255,255,255,.07); font:500 11.5px "Prompt"; padding:3px 10px; color:var(--sub); }
+body.ui5 #ui #chatTabs button.tab.on{ background:var(--acc); color:#0b1330; }
+body.ui5 #ui #log{ height:74px; font:400 12.5px/1.45 "Prompt"; padding:2px 10px; }
+body.ui5 #ui #chat form, body.ui5 #ui #chat .inrow{ border-top:1px solid var(--g-line); }
+body.ui5 #ui #chat input{ background:rgba(255,255,255,.07); border:1px solid var(--g-line); border-radius:10px; font-family:"Prompt"; }
+body.ui5 #ui #chat button:not(.tab){ border-radius:10px; }
+/* exp bars: slim, glowing */
+body.ui5 #expBars{ height:5px; gap:0; background:rgba(10,14,28,.6); }
+body.ui5 .eb.base i{ background:linear-gradient(90deg,#5b7cff,#5de0e6); box-shadow:0 0 8px rgba(93,224,230,.7); } body.ui5 .eb.job i{ background:linear-gradient(90deg,#f5b94a,#ffd76a); box-shadow:0 0 8px rgba(255,215,106,.6); }
+body.ui5 .eb span{ top:-15px; bottom:auto; height:14px; font:500 10px "Prompt"; opacity:.85; }
+body.ui5 #ui #statusbar{ left:14px; bottom:14px; top:auto; background:var(--g-bg); border:1px solid var(--g-line); border-radius:10px; font:500 10.5px "Prompt"; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+/* guide bubble, toasts, loot */
+body.ui5 #guide{ left:14px; top:128px; } body.ui5 .gb{ background:rgba(255,255,255,.92); border:0; border-radius:14px; color:#3b3f5c; font:500 12.5px/1.5 "Prompt"; box-shadow:0 8px 20px rgba(0,0,0,.25); }
+body.ui5 .gb::after{ border-left-color:rgba(255,255,255,.92); }
+body.ui5 #ui #toast{ top:108px; } body.ui5 #toast, body.ui5 #botPill{ font-family:"Prompt"; border-radius:14px; }
+/* windows */
+body.ui5 .win{ border-radius:18px; background:var(--g-bg2); }
+body.ui5 .win h2{ font:600 15px "Prompt"; color:var(--txt); padding:12px 14px 10px 18px; border-bottom:1px solid var(--g-line); background:none; letter-spacing:.2px; }
+body.ui5 .win .xbtn{ width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.1); border:0; color:#fff; }
+body.ui5 .win .xbtn:hover{ background:#ff4d6d; }
+body.ui5 .btn{ border-radius:10px; font-family:"Prompt"; }
+body.ui5 #menuPop{ border-radius:18px; }
+/* touch / narrow screens */
+@media (max-width:1100px){ body.ui5 #ui #chat{ left:14px; transform:none; width:340px; min-width:0; } body.ui5 #ui #topbar .tb{ width:48px; } body.ui5 #ui #topbar .tb label{ display:none; } body.ui5 #ui #mapbox{ top:64px; } }
+@media (max-width:860px){
+  body.ui5 #ui #info{ width:230px; grid-template-columns:48px 1fr; padding:8px 10px; } body.ui5 #ui #avatarWrap{ width:48px; height:48px; } body.ui5 #info .pf{ width:48px; } body.ui5 #info .bj{ display:none; }
+  body.ui5 #ui #topbar{ display:none; } body.ui5 #rightBtns{ display:flex; top:12px; right:14px; bottom:auto; flex-direction:row; } body.ui5 .rb{ background:var(--g-bg); border:1px solid var(--g-line); }
+  body.ui5 #ui #mapbox{ top:62px; width:130px; } body.ui5 #ui #currency{ display:none; } body.ui5 #mapBanner{ display:none; }
+  body.ui5 #questTrack{ top:210px; } body.ui5 .qt{ min-width:0; max-width:190px; } body.ui5 #gainFeed{ right:14px; top:280px; }
+  body.ui5 #ui #chat{ left:10px; top:auto; bottom:auto; top:80px; width:min(250px,56vw); } body.ui5 #ui #chat #log{ height:46px; }
+  body.ui5 #skillbar{ right:8px; bottom:14px; transform:scale(.8); transform-origin:right bottom; }
+  body.ui5 #ui #joy{ left:12px; bottom:40px; } body.ui5 #ui #sitBtn{ left:auto; right:14px; bottom:260px; display:grid; } body.ui5 #ui #emoteBtn{ display:none; }
+  body.ui5 #guide{ top:auto; bottom:250px; }
+}
