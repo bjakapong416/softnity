@@ -505,7 +505,7 @@ class Field extends Phaser.Scene{
 function makeEnt(tex,tx,ty){
   const pos={x:tx*T+16,y:ty*T+27};
   const shadow=S.add.image(pos.x,pos.y-2,'shadow').setDepth(1);
-  const spr=S.add.sprite(pos.x,pos.y,tex,0).setOrigin(.5,1).setDepth(pos.y); const bs=HD_KEYS.has(tex)?1/HD.K:1; spr.setScale(bs);
+  const spr=S.add.sprite(pos.x,pos.y,tex,HERO8.has(tex)?'idle_S_0':0).setOrigin(.5,1).setDepth(pos.y); const bs=HD_KEYS.has(tex)?1/HD.K:1; spr.setScale(bs);
   return {tx,ty,pos,spr,shadow,path:[],moving:false,facing:{dx:0,dy:1},speed:300,bs};
 }
 function syncEnt(e,off){ e.spr.setPosition(e.pos.x,e.pos.y-off).setDepth(e.pos.y); e.shadow.setPosition(e.pos.x,e.pos.y-2); }

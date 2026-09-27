@@ -4,6 +4,7 @@
 const artCache={};
 function mockScene(){ return { textures:{ exists:k=>!!artCache[k], createCanvas:(k,w,h)=>{ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; artCache[k]=cv; const ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false; return { getContext:()=>ctx, refresh(){}, add(){}, getSourceImage:()=>cv }; } }, anims:{ create(){}, exists:()=>true } }; }
 const art=k=>artCache[k]?artCache[k].toDataURL():'';
+function heroSheetObj(job,hair,withGear,look){ return (HD.on&&HD.ready)?(withGear?bakeHeroGear(job,hair):bakeHeroHD(job,hair,look)):null; }
 function heroSheet(job,hair,withGear,look){ if(HD.on&&HD.ready) return (withGear?bakeHeroGear(job,hair):bakeHeroHD(job,hair,look)).canvas.toDataURL();
   const cv=document.createElement('canvas'); cv.width=48*27; cv.height=64; const c=cv.getContext('2d'); c.imageSmoothingEnabled=false;
   for(let i=0;i<27;i++) drawHero2(c,Math.floor(i/9),i%9,i*48,job,hair); outline(c,48*27,64,'#2a1a14'); return cv.toDataURL(); }
@@ -35,7 +36,9 @@ function buildTitle(){
   let ph=''; for(let i=0;i<28;i++) ph+=`<i class="pt" style="left:${rnd(0,100)}%;animation-duration:${rnd(9,16).toFixed(1)}s;animation-delay:-${rnd(0,16).toFixed(1)}s;background:${['#ffc0d6','#ffe0ec','#ff9fc0'][i%3]}"></i>`; $('tsPetals').innerHTML=ph;
   // hero walking across the meadow
   const hs=heroSheet(P.job||'Novice',P.hair||0,hadSave), he=$('tsHero'); he.style.backgroundImage=`url(${hs})`; he.style.backgroundSize=`${48*27*3}px 192px`;
-  let hf=0; setInterval(()=>{ hf=(hf+1)%4; he.style.backgroundPosition=`-${(18+2+hf)*(he.clientWidth||144)}px 0`; },120);
+  const hso=heroSheetObj(P.job||'Novice',P.hair||0,hadSave);
+  let hf=0; setInterval(()=>{ if(hso&&hso.eight){ const k=(he.clientWidth||144)/hso.fw, fr=hso.json.frames[`walk_E_${hf%8}`].frame; he.style.backgroundSize=`${hso.canvas.width*k}px ${hso.canvas.height*k}px`; he.style.backgroundPosition=`-${fr.x*k}px -${fr.y*k}px`; hf++; return; }
+    hf=(hf+1)%4; he.style.backgroundPosition=`-${(18+2+hf)*(he.clientWidth||144)}px 0`; },90);
   // wiring
   $('soundBtn').textContent='เสียง: '+(P.sound?'เปิด':'ปิด');
   $('soundBtn').onclick=()=>{ P.sound=!P.sound; persist(); $('soundBtn').textContent='เสียง: '+(P.sound?'เปิด':'ปิด'); };
@@ -48,10 +51,11 @@ function buildTitle(){
 }
 /* character select / create */
 const CS={ dir:0, hair:0, sheet:'', frame:0, timer:null, mode:'create' };
-const CS_DIRS=[[0,false],[2,false],[1,false],[2,true]]; // down, right, up, left
+const CS_DIRS=[[0,false],[2,false],[1,false],[2,true]]; // down, right, up, left (pixel sheets)
+const CS8=['S','SE','E','NE','N','NW','W','SW'];
 function csRender(){
   const job=CS.mode==='select'?P.job:'Novice', hair=CS.mode==='select'?(P.hair||0):CS.hair;
-  CS.sheet=heroSheet(job,hair,CS.mode==='select',CS.mode==='select'?P.look:CS.look); const el=$('csSprite'); el.style.backgroundImage=`url(${CS.sheet})`; el.style.backgroundSize=`${48*27*3}px 192px`;
+  CS.obj=heroSheetObj(job,hair,CS.mode==='select',CS.mode==='select'?P.look:CS.look); CS.sheet=CS.obj?CS.obj.canvas.toDataURL():heroSheet(job,hair,CS.mode==='select',CS.mode==='select'?P.look:CS.look); const el=$('csSprite'); el.style.backgroundImage=`url(${CS.sheet})`; el.style.backgroundSize=CS.obj&&CS.obj.eight?`${CS.obj.canvas.width}px ${CS.obj.canvas.height}px`:`${48*27*3}px 192px`;
   const f=$('csForm');
   if(CS.mode==='create'){
     $('csTitle').textContent='สร้างตัวละคร'; $('csDel').classList.add('hidden'); $('csStart').textContent='สร้างและเริ่มผจญภัย';
@@ -80,10 +84,10 @@ function csRender(){
       <div class="cs-note">ข้อมูลตัวละครเก็บไว้ในเบราว์เซอร์นี้ ลบแล้วกู้คืนไม่ได้</div>`;
   }
 }
-function csAnimate(){ clearInterval(CS.timer); CS.timer=setInterval(()=>{ CS.frame=(CS.frame+1)%4; const [di,flip]=CS_DIRS[CS.dir]; const el=$('csSprite'); el.style.backgroundPosition=`-${(di*9+2+CS.frame)*144}px 0`; el.style.transform=flip?'scaleX(-1)':'none'; },130); }
+function csAnimate(){ clearInterval(CS.timer); CS.timer=setInterval(()=>{ const el0=$('csSprite'); if(CS.obj&&CS.obj.eight){ CS.frame=(CS.frame+1)%8; const fr=CS.obj.json.frames[`walk_${CS8[CS.dir%8]}_${CS.frame}`].frame; el0.style.backgroundPosition=`-${fr.x}px -${fr.y}px`; el0.style.transform='none'; return; } CS.frame=(CS.frame+1)%4; const [di,flip]=CS_DIRS[CS.dir]; const el=$('csSprite'); el.style.backgroundPosition=`-${(di*9+2+CS.frame)*144}px 0`; el.style.transform=flip?'scaleX(-1)':'none'; },130); }
 function openCharSel(){ CS.mode=hadSave?'select':'create'; CS.hair=P.hair||0; CS.look=Object.assign(defLook(),P.look||{}); CS.name=undefined; $('tsPanel').classList.add('hidden'); $('charSel').classList.remove('hidden'); csRender(); csAnimate(); }
 function wireCharSel(){
-  $('csRotL').onclick=()=>{ CS.dir=(CS.dir+3)%4; }; $('csRotR').onclick=()=>{ CS.dir=(CS.dir+1)%4; };
+  $('csRotL').onclick=()=>{ CS.dir=CS.obj&&CS.obj.eight?(CS.dir+7)%8:(CS.dir+3)%4; }; $('csRotR').onclick=()=>{ CS.dir=CS.obj&&CS.obj.eight?(CS.dir+1)%8:(CS.dir+1)%4; };
   $('csBack').onclick=()=>{ clearInterval(CS.timer); $('charSel').classList.add('hidden'); $('tsPanel').classList.remove('hidden'); };
   $('csDel').onclick=()=>{ if(!confirm(`ลบตัวละคร ${P.name} ถาวร?`)) return; try{ localStorage.removeItem(SAVE_KEY); localStorage.removeItem('softnity-proto-v1'); }catch(e){} P=freshPlayer(); hadSave=false; CS.mode='create'; CS.hair=0; CS.look=defLook(); CS.name=undefined; csRender(); };
   $('csStart').onclick=()=>{

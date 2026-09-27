@@ -113,14 +113,14 @@ function checkPortal(t){
 /* equipped headgear as a paper-doll layer: a 3D-baked sheet whose frames match the hero sheet 1:1 */
 const HG_MODELS=['strawhat','crown','kingcrown','bunnyband','thorncirclet','boarhelm'];
 function ensureHG(job,id){ const L=Object.assign(defLook(),P.look||{}), key=`hg-${job}-${id}-${L.style}-${L.body}`; if(!HDW()||!HG_MODELS.includes(id)) return null;
-  if(!HD.sheets[key]) HD.sheets[key]=HD.M.bakeHeadgearLayer(job,id,{ dirs:[0,Math.PI,Math.PI/2], frames:HD.M.HERO_FRAMES, w:48, h:64, k:HD.K, scale:heroScale(job) },lookOf(P.look));
-  if(S&&S.textures&&!S.textures.exists(key)){ const r=HD.sheets[key]; S.textures.addSpriteSheet(key,r.canvas,{ frameWidth:r.fw, frameHeight:r.fh }); S.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR); }
+  if(!HD.sheets[key]) HD.sheets[key]=HD.M.bakeHeadgear8(job,id,{ w:48, h:64, k:HD.K, scale:heroScale(job) },lookOf(P.look));
+  if(S&&S.textures&&!S.textures.exists(key)){ const r=HD.sheets[key]; S.textures.addAtlas(key,r.canvas,r.json); S.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR); }
   return key; }
 function updateHat(){
   const id=P.equip&&P.equip.head, it=id&&ITEMS[id], h=hero.hat; if(!h) return;
   if(customKey()){ h.setVisible(false); if(hero.hg) hero.hg.setVisible(false); return; }
   const hk=it&&!hero.dead&&heroK()>1?ensureHG(P.job,id):null;
-  if(hk){ h.setVisible(false); if(!hero.hg) hero.hg=S.add.sprite(0,0,hk,0).setOrigin(.5,1); if(hero.hg.texture.key!==hk) hero.hg.setTexture(hk,0);
+  if(hk){ h.setVisible(false); if(!hero.hg) hero.hg=S.add.sprite(0,0,hk,'idle_S_0').setOrigin(.5,1); if(hero.hg.texture.key!==hk) hero.hg.setTexture(hk,'idle_S_0');
     const f=hero.spr.frame&&hero.spr.frame.name!=null?hero.spr.frame.name:0;
     hero.hg.setVisible(hero.spr.visible).setPosition(hero.spr.x,hero.spr.y).setScale(hero.spr.scaleX,hero.spr.scaleY).setFlipX(hero.spr.flipX).setFrame(f).setDepth(hero.spr.depth+.5).setAlpha(hero.spr.alpha).setRotation(hero.spr.rotation); return; }
   if(hero.hg) hero.hg.setVisible(false);

@@ -1,7 +1,7 @@
 /* ---------- HD character sprites: 3D models pre-rendered into sprite sheets (like classic RO) ---------- */
 const HD={ on:true, K:3, sheets:{}, M:null, ready:false };
 const HERO_SCALE=.86; // leaves headroom inside the 48x64 frame for tall headgear
-const heroScale=j=>j==='Novice'?.8:HERO_SCALE; // Novice v2 has taller proportions
+const heroScale=j=>(j==='Novice'||j==='Swordman')?.8:HERO_SCALE; // Novice v2 has taller proportions
 const HD_KEYS=new Set();
 async function initHD(){
   if(P.hd===false){ HD.on=false; return; }
@@ -15,8 +15,14 @@ const LOOK={ styles:[['spiky','ผมชี้'],['short','สั้นเรี
 const defLook=()=>({ style:'spiky', eye:0, skin:0, body:'m' });
 const lookOf=L=>{ L=Object.assign(defLook(),L||{}); return { style:L.style, eye:LOOK.eyes[L.eye][0], skin:LOOK.skins[L.skin][0], body:L.body }; };
 const lookSig=L=>{ L=Object.assign(defLook(),L||{}); return `${L.style}.${L.eye}.${L.skin}.${L.body}`; };
+const HERO8=new Set();
 function bakeHeroHD(job,hair,look){ look=look||P.look; const key=`hero-${job}-${hair||0}-${lookSig(look)}`; if(HD.sheets[key]) return HD.sheets[key];
-  const M=HD.M, m=M.makeHero(job,hairHex(hair),undefined,undefined,lookOf(look)); return HD.sheets[key]=M.bake(m,{ dirs:[0,Math.PI,Math.PI/2], frames:M.HERO_FRAMES, w:48, h:64, k:HD.K, scale:heroScale(job) }); }
+  const M=HD.M, m=M.makeHero(job,hairHex(hair),undefined,undefined,lookOf(look)); return HD.sheets[key]=M.bake8(m,{ w:48, h:64, k:HD.K, scale:heroScale(job) }); }
+function addHero8(s,key,sheet){ const src=document.createElement('canvas'); src.width=sheet.canvas.width; src.height=sheet.canvas.height; src.getContext('2d').drawImage(sheet.canvas,0,0);
+  if(s.textures.exists(key)) s.textures.remove(key); s.textures.addAtlas(key,src,sheet.json); s.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
+  Object.entries(sheet.json.animations).forEach(([n,a])=>{ const k=`${key}-${n}`; if(s.anims.exists(k)) s.anims.remove(k); s.anims.create({ key:k, frames:a.frames.map(f=>({ key, frame:f })), frameRate:a.frameRate, repeat:a.repeat }); });
+  HD_KEYS.add(key); HERO8.add(key); }
+function ensureHeroTex(job){ if(!HDW()||!S) return; const key='hero-'+job; if(HERO8.has(key)) return; addHero8(S,key,bakeHeroHD(job,P.hair)); }
 const MOB_HD={ jellop:{make:'makeJellop',w:36,h:32,f:[['idle',0],['hurt',0]]}, moth:{make:'makeMoth',w:32,h:32,f:[['idle',.2],['idle',.7]]},
   bunny:{make:'makeBunny',w:32,h:32,f:[['idle',0],['idle',.25]]}, thornling:{make:'makeThornling',w:32,h:32,f:[['idle',.2],['idle',.7]]},
   boarling:{make:'makeBoarling',w:42,h:32,f:[['idle',0],['idle',.5]]}, kingjellop:{make:'makeKingJellop',w:64,h:56,f:[['idle',0],['hurt',0]]} };
@@ -71,12 +77,13 @@ function hdTexOr(s,key,w,h,fn){
   return canvasTex(s,key,w,h,fn);
 }
 async function bakeAllHD(progress){ if(!HD.on||!HD.ready) return; const jobs=['Novice','Swordman','Archer','Mage'], mobs=Object.keys(MOB_HD); let n=0; const tot=jobs.length+mobs.length;
-  for(const j of jobs){ bakeHeroHD(j,P.hair); progress&&progress(++n/tot); await new Promise(r=>setTimeout(r,0)); }
+  for(const j of jobs){ if(j===P.job) bakeHeroHD(j,P.hair); progress&&progress(++n/tot); await new Promise(r=>setTimeout(r,0)); }
   for(const k of mobs){ bakeMobHD(k); progress&&progress(++n/tot); await new Promise(r=>setTimeout(r,0)); }
   bakeWorldHD(); }
 function hdSheetFor(key){ if(!HD.on||!HD.ready) return null; return key.startsWith('hero-')?HD.sheets[`${key}-${P.hair||0}-${lookSig(P.look)}`]:HD.sheets[key]; }
 function hdOr(s,key,fw,fh,n,draw,out){
   const h=s.textures.addSpriteSheet?hdSheetFor(key):null;
+  if(h&&h.eight){ addHero8(s,key,h); return; }
   if(h){ let src=h.canvas; if(key.startsWith('hero-')){ src=document.createElement('canvas'); src.width=h.canvas.width; src.height=h.canvas.height; src.getContext('2d').drawImage(h.canvas,0,0); }
     s.textures.addSpriteSheet(key,src,{ frameWidth:h.fw, frameHeight:h.fh }); s.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR); HD_KEYS.add(key); if(MONSTERS[key]) MONSTERS[key].faceLeft=true; return; }
   sheetTex(s,key,fw,fh,n,draw,out);
@@ -86,7 +93,7 @@ const heroK=()=>HD_KEYS.has(heroTex())?HD.K:1;
 function gearOf(){ const e=P.equip||{}; return { weapon:e.weapon||null, shield:e.shield||null, garment:e.garment||null, armor:e.armor||null }; }
 const gearSig=()=>{ const g=gearOf(); return [g.weapon||'-',g.shield||'-',g.garment||'-',g.armor||'-'].join('.'); };
 function bakeHeroGear(job,hair){ const key=`heroG-${job}-${hair||0}-${lookSig(P.look)}-${gearSig()}`; if(HD.sheets[key]) return HD.sheets[key];
-  const m=HD.M.makeHero(job,hairHex(hair),null,gearOf(),lookOf(P.look)); return HD.sheets[key]=HD.M.bake(m,{ dirs:[0,Math.PI,Math.PI/2], frames:HD.M.HERO_FRAMES, w:48, h:64, k:HD.K, scale:heroScale(job) }); }
+  const m=HD.M.makeHero(job,hairHex(hair),null,gearOf(),lookOf(P.look)); return HD.sheets[key]=HD.M.bake8(m,{ w:48, h:64, k:HD.K, scale:heroScale(job) }); }
 let appliedGear='';
 function applyHeroGear(){
   if(!HDW()||!S||!S.textures) return; const key=heroTex(); if(!HD_KEYS.has(key)) return;

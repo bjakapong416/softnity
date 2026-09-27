@@ -97,6 +97,55 @@ function SoftnityModels(THREE){
       [-1,1].forEach(sd=>{ const tail=mk(gG,new THREE.BoxGeometry(.14,.5,.04),toon(sd>0?0xe2524a:0xc8403a),sd*.08,.98,-.32,1.1); tail.rotation.set(.35,0,sd*.12); }); }
     return { wp, bowString, wkind };
   }
+  /* v2 rig: hip at .8, knee at .46 (thigh .34 + shin .34 + boot sole) so walking can bend the knees */
+  function legsV2(body,dress){ const out={};
+    [['L',-.13],['R',.13]].forEach(([k,x])=>{ const hip=new THREE.Group(); hip.position.set(x,.8,0); body.add(hip); const knee=new THREE.Group(); knee.position.set(0,-.34,0); hip.add(knee); dress(hip,knee,k); out['leg'+k]=hip; out['knee'+k]=knee; });
+    return out; }
+  /* Swordman v2 — original design inspired by the classic knight-in-training look:
+     white tunic with orange trim, silver breastplate with a wing crest, pauldrons, rust mantle + cape, belt and straps, silver greaves */
+  function makeSwordman(hair,gear,LK,WL){
+    const C={ tunic:0xf4efe6, trim:0xd9772b, metal:0xcfd6de, metalD:0x9aa3ae, leather:0x6b4424, leatherD:0x4a2e18, pants:0x3a3440, mantle:0xb5642a, mantleD:0x8a4620, gold:0xe2b44a, glove:0x7a4e2a };
+    if(gear&&gear.armor==='chainmail'){ C.tunic=0xb9c1ca; C.trim=0x6b7686; }
+    const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
+    const t=c=>toon(c), metal=std(C.metal,{ metalness:.35, roughness:.3 }), metalD=std(C.metalD,{ metalness:.35, roughness:.35 }), skin=toon(LK.skin), hairM=toon(hair[0]), hairD=toon(hair[1]);
+    const { legL, legR, kneeL, kneeR }=legsV2(body,(hip,knee)=>{
+      mk(hip,new THREE.CapsuleGeometry(.105,.2,4,10),t(C.pants),0,-.17,0,1.07);
+      mk(knee,new THREE.SphereGeometry(.09,12,10),metal,0,0,.06,1.08);
+      mk(knee,new THREE.CylinderGeometry(.115,.1,.26,12),metal,0,-.17,.01,1.06);
+      mk(knee,new THREE.BoxGeometry(.2,.1,.32),t(C.leatherD),0,-.4,.05,1.08); mk(knee,new THREE.BoxGeometry(.18,.05,.1),metalD,0,-.37,.18,0); });
+    mk(body,new THREE.CylinderGeometry(.26,.24,.2,14),t(C.pants),0,.82,0,1.05);
+    // tunic + tabard skirt with orange trim
+    mk(body,new THREE.CylinderGeometry(.24,.29,.62,16),t(C.tunic),0,1.14,0,1.05);
+    [[0,.24,0],[0,-.24,Math.PI]].forEach(([x,z,ry])=>{ const p=new THREE.Group(); p.position.set(x,.84,z); p.rotation.y=ry; body.add(p);
+      const pl=mk(p,new THREE.BoxGeometry(.36,.38,.04),t(C.tunic),0,-.18,0,1.06); pl.rotation.x=-.08; mk(p,new THREE.BoxGeometry(.37,.05,.045),t(C.trim),0,-.36,.015,0); [-1,1].forEach(sd=>mk(p,new THREE.BoxGeometry(.035,.38,.045),t(C.trim),sd*.165,-.18,.015,0)); });
+    [-1,1].forEach(sd=>{ const sp=mk(body,new THREE.BoxGeometry(.04,.3,.3),t(C.tunic),sd*.27,.7,0,1.06); sp.rotation.z=sd*.12; });
+    // breastplate + crest
+    const bp=mk(body,new THREE.SphereGeometry(.27,20,14,0,Math.PI*2,0,Math.PI*.55),metal,0,1.1,.06,1.04); bp.rotation.x=Math.PI/2+.1; bp.scale.set(1,.55,1.05);
+    mk(body,new THREE.OctahedronGeometry(.045,0),std(C.gold,{ metalness:.35, roughness:.3 }),0,1.2,.29,0);
+    [-1,1].forEach(sd=>{ const w=mk(body,new THREE.SphereGeometry(.07,10,8),metalD,sd*.08,1.2,.28,0); w.scale.set(1.3,.55,.4); w.rotation.z=sd*-.35; });
+    // belt + strap + buckle
+    mk(body,new THREE.CylinderGeometry(.295,.295,.08,16),t(C.leather),0,.87,0,1.04); mk(body,new THREE.BoxGeometry(.1,.09,.04),metal,0,.87,.3,0);
+    const st=mk(body,new THREE.BoxGeometry(.05,.7,.03),t(C.leatherD),0,1.1,.28,0); st.rotation.z=.6;
+    // mantle + cape
+    mk(body,new THREE.CylinderGeometry(.2,.36,.2,18,1,true),toon(C.mantle,{ side:THREE.DoubleSide }),0,1.43,0,1.04);
+    mk(body,new THREE.TorusGeometry(.19,.045,6,18),t(C.mantleD),0,1.52,0,0).rotation.x=Math.PI/2;
+    let cape=null; if(!(gear&&gear.garment)){ cape=new THREE.Group(); cape.position.set(0,1.42,-.26); body.add(cape);
+      const cg=new THREE.PlaneGeometry(.66,.95,1,6); cg.translate(0,-.47,0); const p=cg.attributes.position; for(let i=0;i<p.count;i++){ const y=p.getY(i); p.setZ(i,-Math.pow(Math.max(0,-y),1.5)*.12); } cg.computeVertexNormals();
+      cape.add(new THREE.Mesh(cg,toon(C.mantle,{ side:THREE.DoubleSide }))); }
+    // arms: sleeve, pauldron, bracer, glove
+    const armL=new THREE.Group(), armR=new THREE.Group(); armL.position.set(-.35,1.4,0); armR.position.set(.35,1.4,0); body.add(armL,armR);
+    [armL,armR].forEach(a=>{ mk(a,new THREE.CapsuleGeometry(.085,.24,4,10),t(C.tunic),0,-.18,0,1.07);
+      const p1=mk(a,new THREE.SphereGeometry(.15,14,10,0,Math.PI*2,0,Math.PI*.55),metal,0,.02,0,1.05); p1.scale.set(1.05,.85,1.05);
+      mk(a,new THREE.SphereGeometry(.12,12,8,0,Math.PI*2,0,Math.PI*.55),metalD,0,-.07,0,0).scale.set(1.1,.6,1.1);
+      mk(a,new THREE.CylinderGeometry(.08,.075,.16,12),metal,0,-.42,0,1.08); mk(a,new THREE.SphereGeometry(.088,12,10),t(C.glove),0,-.56,0,1.07); });
+    mk(body,new THREE.CylinderGeometry(.085,.09,.12,10),skin,0,1.54,0,0);
+    const wg=gear||{ weapon:'longsword', shield:'guard' };
+    const { wp, bowString, wkind }=buildGear(gear?WL:WEAPON_LOOK.longsword,wg,body,armL,armR,{ hand:-.56, neck:.24 });
+    const head=new THREE.Group(); head.position.set(0,1.84,0); head.scale.setScalar(.78); body.add(head);
+    mk(head,new THREE.SphereGeometry(.46,32,24),skin,0,0,0,1.04); makeHair(head,LK.style,hairM,hairD,LK.ribbon); buildFace(head,LK,hairD);
+    root.userData={ body, legL, legR, kneeL, kneeR, armL, armR, head, wp, cape, bowString, job:'Swordman', weapon:wkind, sitDrop:-.5, v:2, shieldArm:!!wg.shield };
+    return root;
+  }
   /* Novice v2: taller "sprite-era" proportions (head about 1/3.5 of height) and a layered beginner-adventurer outfit */
   function makeNovice(hair,gear,LK,WL){
     const C={ shirt:0xf1e6c8, shirtS:0xd9c9a4, vest:0x8a5a32, strap:0x5a3b1e, pants:0x7a5a42, boot:0x5a3b22, cuff:0x8a6a4a, belt:0x6b4424, gold:0xe2b44a, scarf:0xc8643a, glove:0x6b4424, pack:0xc9b08a, packD:0xa89068, roll:0x6a8a5a };
@@ -104,10 +153,9 @@ function SoftnityModels(THREE){
     const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
     const t=c=>toon(c), skin=toon(LK.skin), hairM=toon(hair[0]), hairD=toon(hair[1]), fem=LK.body==='f';
     // legs (hip at .8)
-    const legL=new THREE.Group(), legR=new THREE.Group(); legL.position.set(-.13,.8,0); legR.position.set(.13,.8,0); body.add(legL,legR);
-    [legL,legR].forEach(l=>{ mk(l,new THREE.CapsuleGeometry(.105,.36,4,10),t(fem?C.shirt:C.pants),0,-.26,0,1.07);
-      mk(l,new THREE.CylinderGeometry(.13,.12,.34,12),t(C.boot),0,-.6,.01,1.07); mk(l,new THREE.TorusGeometry(.13,.035,6,14),t(C.cuff),0,-.44,.01,0).rotation.x=Math.PI/2;
-      mk(l,new THREE.BoxGeometry(.2,.08,.32),t(0x3a2616),0,-.77,.05,1.08); for(let i=0;i<3;i++) mk(l,new THREE.BoxGeometry(.1,.015,.02),t(C.cuff),0,-.54-i*.07,.125,0); });
+    const { legL, legR, kneeL, kneeR }=legsV2(body,(hip,knee)=>{ mk(hip,new THREE.CapsuleGeometry(.105,.2,4,10),t(fem?C.shirt:C.pants),0,-.17,0,1.07);
+      mk(knee,new THREE.CylinderGeometry(.13,.12,.32,12),t(C.boot),0,-.2,.01,1.07); mk(knee,new THREE.TorusGeometry(.13,.035,6,14),t(C.cuff),0,-.05,.01,0).rotation.x=Math.PI/2;
+      mk(knee,new THREE.BoxGeometry(.2,.08,.32),t(0x3a2616),0,-.42,.05,1.08); for(let i=0;i<3;i++) mk(knee,new THREE.BoxGeometry(.1,.015,.02),t(C.cuff),0,-.14-i*.07,.125,0); });
     mk(body,new THREE.CylinderGeometry(.26,.24,.2,14),t(C.pants),0,.82,0,1.05);
     if(fem){ mk(body,new THREE.CylinderGeometry(.3,.44,.3,18,1,true),toon(C.shirtS,{ side:THREE.DoubleSide }),0,.7,0,1.04);
       mk(body,new THREE.CylinderGeometry(.3,.4,.22,18,1,true,-.4,Math.PI*1.75),toon(C.vest,{ side:THREE.DoubleSide }),0,.76,0,1.04); }
@@ -138,13 +186,14 @@ function SoftnityModels(THREE){
     // head (smaller than chibi classes)
     const head=new THREE.Group(); head.position.set(0,1.84,0); head.scale.setScalar(.78); body.add(head);
     mk(head,new THREE.SphereGeometry(.46,32,24),skin,0,0,0,1.04); makeHair(head,LK.style,hairM,hairD,LK.ribbon); buildFace(head,LK,hairD);
-    root.userData={ body, legL, legR, armL, armR, head, wp, cape:null, bowString, job:'Novice', weapon:wkind, sitDrop:-.5, v:2 };
+    root.userData={ body, legL, legR, kneeL, kneeR, armL, armR, head, wp, cape:null, bowString, job:'Novice', weapon:wkind, sitDrop:-.5, v:2 };
     return root;
   }
   function makeHero(job='Novice', hair=[0xf07a52,0xc4502e], over, gear, look){
     const O=Object.assign({},OUTFIT[job]||OUTFIT.Novice,over||{});
     const LK=Object.assign({ style:'spiky', eye:0x2a4f9a, skin:SKIN, body:'m', ribbon:0xe2524a },look||{});
     if(job==='Novice'&&!over){ const W0=gear?(gear.weapon?WEAPON_LOOK[gear.weapon]:null):WEAPON_LOOK.shortsword; return makeNovice(hair,gear,LK,W0); }
+    if(job==='Swordman'&&!over){ const W0=gear?(gear.weapon?WEAPON_LOOK[gear.weapon]:null):WEAPON_LOOK.longsword; return makeSwordman(hair,gear,LK,W0); }
     if(gear&&gear.armor&&ARMOR_LOOK[gear.armor]) Object.assign(O,ARMOR_LOOK[gear.armor]);
     if(gear&&gear.garment&&O.cape) O.cape=null; // the worn garment replaces the job cape
     const WL=gear? (gear.weapon?WEAPON_LOOK[gear.weapon]:null) : (O.weapon==='none'?null:WEAPON_LOOK[DEFAULT_WP[job]]||null);
@@ -187,8 +236,41 @@ function SoftnityModels(THREE){
     root.userData={ body, legL, legR, armL, armR, head, wp, cape, bowString, job, weapon:wkind };
     return root;
   }
-  function poseHero(m, state, ph){
+  const lerpKeys=(keys,ph)=>{ // keys: [[ph,{...}],...] -> interpolated object
+    let a=keys[0], b=keys[keys.length-1]; for(let i=0;i<keys.length-1;i++){ if(ph>=keys[i][0]&&ph<=keys[i+1][0]){ a=keys[i]; b=keys[i+1]; break; } }
+    const t=b[0]===a[0]?0:(ph-a[0])/(b[0]-a[0]), e=t*t*(3-2*t), o={}; for(const k in a[1]) o[k]=a[1][k]+(b[1][k]-a[1][k])*e; return o; };
+  const SWORD_KEYS=[ // ready -> wind-up -> slash -> follow-through -> recover
+    [0,  { ax:-.55, az:-.15, ly:0,    lx:0,   sx:-.6, sz:.25, fl:0,    bl:0,   bob:0 }],
+    [.22,{ ax:-2.7, az:-.45, ly:-.38, lx:-.04,sx:-.75,sz:.3,  fl:-.22, bl:.12, bob:.02 }],
+    [.45,{ ax:-.9,  az:.35,  ly:.28,  lx:.14, sx:-.5, sz:.35, fl:-.45, bl:.22, bob:-.04 }],
+    [.7, { ax:.25,  az:.55,  ly:.42,  lx:.16, sx:-.4, sz:.3,  fl:-.42, bl:.2,  bob:-.05 }],
+    [1,  { ax:-.45, az:0,    ly:.08,  lx:.02, sx:-.55,sz:.2,  fl:-.1,  bl:.05, bob:0 }] ];
+  function poseV2(m,state,ph){
     const U=m.userData, TAU=Math.PI*2;
+    [U.legL,U.legR,U.kneeL,U.kneeR,U.armL,U.armR].forEach(g=>g.rotation.set(0,0,0));
+    U.body.position.set(0,0,0); U.body.rotation.set(0,0,0); U.head.rotation.set(0,0,0); if(U.cape) U.cape.rotation.set(.08,0,0);
+    if(U.weapon==='bow') U.wp.rotation.set(0,Math.PI/2,0);
+    if(U.weapon==='sword') U.wp.rotation.set(state==='attack'?.3:2.35,0,state==='attack'?0:-.15); // at rest the blade points down-forward
+    const shield=U.shieldArm;
+    if(state==='idle'){ const b=Math.sin(ph*TAU); U.body.position.y=b*.012; U.armL.rotation.z=shield?.18:.07+b*.02; U.armL.rotation.x=shield?-.35:0; U.armR.rotation.z=-.07-b*.02; U.armR.rotation.x=-.1; U.head.rotation.z=b*.025;
+      U.kneeL.rotation.x=.05; U.kneeR.rotation.x=.05; }
+    else if(state==='walk'){
+      // compact stride: thigh swing 0.38 rad, knee folds only while the leg swings forward, body dips at each foot contact
+      const legPose=(hip,knee,p)=>{ const s=Math.sin(p*TAU), c=Math.cos(p*TAU); hip.rotation.x=-.38*s; knee.rotation.x=.08+.62*Math.pow(Math.max(0,c),1.6)+ (s<0?.1*-s:0); };
+      legPose(U.legL,U.kneeL,ph); legPose(U.legR,U.kneeR,ph+.5);
+      const s=Math.sin(ph*TAU); U.armL.rotation.x=shield?-.3+.08*s:.32*s; U.armL.rotation.z=shield?.18:.06; U.armR.rotation.x=-.3*s*(U.weapon==='sword'?.6:1)-.08; U.armR.rotation.z=-.06;
+      U.body.position.y=-.028*Math.cos(ph*TAU*2)-.01; U.body.rotation.y=.07*s; U.body.rotation.x=.04; U.head.rotation.y=-.05*s;
+      if(U.cape) U.cape.rotation.x=.22+.08*Math.abs(Math.cos(ph*TAU)); }
+    else if(state==='attack'){
+      if(U.weapon==='sword'||U.weapon==='none'){ const k=lerpKeys(SWORD_KEYS,ph);
+        U.armR.rotation.x=k.ax; U.armR.rotation.z=k.az; U.body.rotation.y=k.ly; U.body.rotation.x=k.lx; U.armL.rotation.x=shield?k.sx:-.2; U.armL.rotation.z=shield?k.sz:.15;
+        U.legL.rotation.x=k.fl; U.kneeL.rotation.x=-k.fl*.5; U.legR.rotation.x=k.bl; U.kneeR.rotation.x=.15+k.bl; U.body.position.y=k.bob; if(U.cape) U.cape.rotation.x=.15+Math.max(0,k.ly)*.4; }
+      else if(U.weapon==='bow'){ const k=Math.min(1,ph/.6); U.armL.rotation.x=-1.5; U.armL.rotation.z=.1; U.armR.rotation.x=-1.4+(ph<.6?k*.2:0); U.armR.rotation.y=ph<.6?-.4-k*.5:-.2; U.body.rotation.y=.25; U.legL.rotation.x=-.2; U.legR.rotation.x=.15; U.kneeR.rotation.x=.2; }
+      else { const k=ph<.45?ph/.45:1-(ph-.45)/.55; U.armR.rotation.x=-1.2-k*1.4; U.armL.rotation.x=-.6*k; U.body.position.y=k*.04; U.legL.rotation.x=-.15*k; U.kneeR.rotation.x=.12*k; } }
+    else if(state==='sit'){ U.body.position.y=U.sitDrop||-.5; U.legL.rotation.x=-1.5; U.legR.rotation.x=-1.5; U.kneeL.rotation.x=1.35; U.kneeR.rotation.x=1.35; U.armL.rotation.x=-.3; U.armR.rotation.x=-.3; U.armL.rotation.z=.2; U.armR.rotation.z=-.2; }
+  }
+  function poseHero(m, state, ph){
+    const U=m.userData, TAU=Math.PI*2; if(U.v===2) return poseV2(m,state,ph);
     U.legL.rotation.set(0,0,0); U.legR.rotation.set(0,0,0); U.armL.rotation.set(0,0,0); U.armR.rotation.set(0,0,0);
     U.body.position.set(0,0,0); U.body.rotation.set(0,0,0); U.head.rotation.set(0,0,0); if(U.cape) U.cape.rotation.set(.08,0,0);
     if(U.weapon==='bow') U.wp.rotation.set(0,Math.PI/2,0);
@@ -490,7 +572,25 @@ function SoftnityModels(THREE){
     let i=0; dirs.forEach(yaw=>{ model.rotation.y=yaw; frames.forEach(f=>{ P(model,f.state,f.ph); r.render(sc,cam); ctx.drawImage(r.domElement,i*W,0); i++; }); });
     sc.remove(model); return { canvas:sheet, fw:W, fh:H, count:i, scale:s };
   }
+  /* 8-direction sheet: every animation x 8 directions packed row-major into an atlas (Phaser JSON hash) */
+  const DIRS8=[['S',0],['SW',-Math.PI/4],['W',-Math.PI/2],['NW',-3*Math.PI/4],['N',Math.PI],['NE',3*Math.PI/4],['E',Math.PI/2],['SE',Math.PI/4]];
+  const ANIMS8=[['idle',2,3,-1],['walk',8,14,-1],['attack',5,14,0],['sit',1,1,-1]]; // name, frames, fps, repeat
+  function bake8(model,{ w=48, h=64, k=3, scale, cols=24, pose }={}){
+    const r=renderer(), sc=stage(); sc.add(model); const wu=w/32, hu=h/32, cam=cameraFor(wu,hu); if(scale) model.scale.setScalar(scale);
+    const P=pose||((m,s,p)=>m.userData.legL?poseHero(m,s,p):poseMob(m,s,p)); const W=w*k, H=h*k; r.setSize(W,H,false);
+    const total=ANIMS8.reduce((a,[,n])=>a+n,0)*DIRS8.length, rows=Math.ceil(total/cols);
+    const cv=document.createElement('canvas'); cv.width=cols*W; cv.height=rows*H; const ctx=cv.getContext('2d'); const json={ frames:{}, animations:{}, meta:{ size:{ w:cv.width, h:cv.height }, cell:{ w:W, h:H }, dirs:DIRS8.map(d=>d[0]) } };
+    let i=0; ANIMS8.forEach(([a,n,fps,rep])=>DIRS8.forEach(([d,yaw])=>{ const names=[]; model.rotation.y=yaw;
+      for(let f=0;f<n;f++){ P(model,a,n===1?0:f/n); r.render(sc,cam); const x=(i%cols)*W, y=Math.floor(i/cols)*H; ctx.drawImage(r.domElement,x,y); const nm=`${a}_${d}_${f}`; names.push(nm);
+        json.frames[nm]={ frame:{ x, y, w:W, h:H }, rotated:false, trimmed:false, spriteSourceSize:{ x:0, y:0, w:W, h:H }, sourceSize:{ w:W, h:H } }; i++; }
+      json.animations[`${a}_${d}`]={ frames:names, frameRate:fps, repeat:rep }; }));
+    sc.remove(model); return { canvas:cv, json, fw:W, fh:H, eight:true };
+  }
+  function bakeHeadgear8(job,id,opt,look){ const m=makeHero(job,undefined,undefined,undefined,look), hg=attachHeadgear(m,id); if(!hg) return null;
+    const depthOnly=new THREE.MeshBasicMaterial({ colorWrite:false }); const inHat=o=>{ for(let p=o;p;p=p.parent) if(p===hg) return true; return false; };
+    m.traverse(o=>{ if(!(o.isMesh||o.isLine)) return; if(inHat(o)) o.renderOrder=2; else { o.material=depthOnly; o.renderOrder=-2; } });
+    return bake8(m,opt); }
   const HERO_FRAMES=[{state:'idle',ph:0},{state:'idle',ph:.5},{state:'walk',ph:0},{state:'walk',ph:.25},{state:'walk',ph:.5},{state:'walk',ph:.75},{state:'attack',ph:.3},{state:'attack',ph:.85},{state:'sit',ph:0}];
-  return { THREE, makeProp, HAIR_STYLES, WEAPON_LOOK, ARMOR_LOOK, makeHeadgear, attachHeadgear, bakeHeadgearLayer, makeHero, poseHero, makeTree, makeRock, makeFlower, makeTuft, makeReed, makeWheat, makeHay, makeLily, bakeLayers, makeJellop, makeKingJellop, makeMoth, makeBunny, makeThornling, makeBoarling, makeScorpion, makeGolem, poseMob, bake, HERO_FRAMES, OUTFIT };
+  return { THREE, bake8, bakeHeadgear8, DIRS8, ANIMS8, makeProp, HAIR_STYLES, WEAPON_LOOK, ARMOR_LOOK, makeHeadgear, attachHeadgear, bakeHeadgearLayer, makeHero, poseHero, makeTree, makeRock, makeFlower, makeTuft, makeReed, makeWheat, makeHay, makeLily, bakeLayers, makeJellop, makeKingJellop, makeMoth, makeBunny, makeThornling, makeBoarling, makeScorpion, makeGolem, poseMob, bake, HERO_FRAMES, OUTFIT };
 }
 

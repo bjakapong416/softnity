@@ -54,7 +54,7 @@ function canJobChange(){ return P.job==='Novice' && P.jlv>=10 && skLv('basic')>=
 function jobChange(job){
   P.job=job; P.jlv=1; P.jexp=0; P.skillbar=DEFAULT_BAR[job].slice(); skStage=null; fixEquipForJob();
   P.bot.style = job==='Mage' ? 'skill' : 'mixed';
-  hero.spr.setTexture(heroTex(),0); if(!customKey()) hero.spr.setScale(HD_KEYS.has(heroTex())?1/HD.K:1); fitHeroScale(); applyHeroGear(); const d=derived(); P.hp=d.maxHP; P.sp=d.maxSP;
+  ensureHeroTex(P.job); hero.spr.setTexture(heroTex(),HERO8.has(heroTex())?'idle_S_0':0); if(!customKey()) hero.spr.setScale(HD_KEYS.has(heroTex())?1/HD.K:1); fitHeroScale(); applyHeroGear(); const d=derived(); P.hp=d.maxHP; P.sp=d.maxSP;
   closeWin('dialog'); jobFx(job); announce(`<b>${P.name}</b> เปลี่ยนอาชีพเป็น <em>${job}</em> แล้ว!`); logMsg(`เปลี่ยนอาชีพเป็น ${job} แล้ว! กด K เพื่อลงแต้มสกิลเมื่อ Job Lv เพิ่ม`,'sys');
   persist(); refreshUI();
 }

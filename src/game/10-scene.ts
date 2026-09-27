@@ -36,6 +36,8 @@ function customKey(){ const b=(P.look&&P.look.body)||'m', k=`${P.job}-${b}`; ret
 const heroTex=()=>{ const ck=customKey(); return ck?'cust-'+ck:'hero-'+P.job; };
 const DIR8=f=>({'0,1':'S','1,1':'SE','1,0':'E','1,-1':'NE','0,-1':'N','-1,-1':'NW','-1,0':'W','-1,1':'SW'})[Math.sign(f.dx)+','+Math.sign(f.dy)]||'S';
 function playHero(st){ const tex=heroTex();
+  if(HERO8.has(tex)){ const A={ idle:'idle', walk:'walk', atk:'attack', cast:'attack', sit:'sit' }[st]||'idle', key=`${tex}-${A}_${DIR8(hero.facing)}`;
+    hero.spr.setFlipX(false); if(S.anims.exists(key)) hero.spr.play(key,st!=='atk'); return; }
   if(tex.startsWith('cust-')){ const A={ idle:'stand', walk:'walk', atk:'attack', cast:'attack', sit:'stand' }[st]||'stand', d=DIR8(hero.facing);
     let key=`${tex}-${A}_${d}`; if(!S.anims.exists(key)) key=`${tex}-stand_${d}`; if(!S.anims.exists(key)) key=`${tex}-stand_S`;
     hero.spr.setFlipX(false); if(S.anims.exists(key)) hero.spr.play(key,st!=='atk'); return; }
