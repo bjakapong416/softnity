@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Softnity · Sprite Importer</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0f1a36; --panel:#16244a; --line:#3a4f8a; --gold:#e8c170; --ink:#eef3ff; --muted:#9fb0d6; --ok:#5fe08a; --bad:#ff8f8f; }
+  :root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); color-scheme:dark; }
+  *,*::before,*::after{ box-sizing:inherit; }
+  html,body{ margin:0; min-height:100%; background:radial-gradient(120% 80% at 50% 0%,#23407e,var(--bg) 60%); color:var(--ink); font-family:"Chakra Petch",system-ui,sans-serif; }
+  header{ padding:16px 20px 4px; } header h1{ margin:0; font:700 26px "Cinzel",serif; letter-spacing:2px; background:linear-gradient(180deg,#fffbe6,#ffe08a 50%,#c8862a); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header p{ margin:4px 0 0; color:var(--muted); font-size:14px; max-width:80ch; }
+  main{ display:grid; grid-template-columns:300px 1fr; gap:16px; padding:12px 20px 28px; align-items:start; }
+  .panel{ background:rgba(22,36,74,.92); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .step{ font:700 13px "Chakra Petch"; color:var(--gold); margin:14px 0 6px; } .step:first-child{ margin-top:0; }
+  label.f{ display:block; font-size:13px; color:var(--muted); margin:8px 0 3px; }
+  input[type=text],input[type=number],select{ width:100%; font:inherit; font-size:14px; padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:#0b1330; color:#fff; }
+  input[type=range]{ width:100%; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .chk{ display:flex; gap:8px; align-items:center; font-size:13.5px; margin:6px 0; }
+  .btn{ width:100%; margin-top:8px; padding:9px; border-radius:10px; border:0; cursor:pointer; font:700 14.5px "Chakra Petch"; color:#3a2410; background:linear-gradient(180deg,#fff3c0,#ffd060 45%,#e8962c); box-shadow:0 3px 0 #6b4414; }
+  .btn.sec{ color:#fff; background:linear-gradient(180deg,#4b78d8,#2c55b0); box-shadow:0 3px 0 #1c3470; }
+  .btn:disabled{ opacity:.45; cursor:default; }
+  .btn:focus-visible,select:focus-visible,input:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  #drop{ border:2px dashed var(--line); border-radius:10px; padding:14px; text-align:center; color:var(--muted); cursor:pointer; font-size:13.5px; }
+  #drop.over{ border-color:var(--gold); color:#fff; }
+  #status{ margin-top:10px; font-size:13px; color:var(--muted); min-height:18px; }
+  h2{ font:700 15px "Chakra Petch"; color:var(--gold); margin:0 0 8px; }
+  .card{ background:rgba(22,36,74,.92); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:14px; }
+  #srcWrap{ overflow:auto; max-height:460px; border-radius:8px; background:repeating-conic-gradient(#2a3b6a 0 25%,#223160 0 50%) 0 0/16px 16px; }
+  #src{ display:block; image-rendering:pixelated; cursor:crosshair; }
+  .rows{ display:flex; flex-direction:column; gap:8px; }
+  .rowc{ display:grid; grid-template-columns:70px 130px 70px 1fr; gap:8px; align-items:center; font-size:13px; background:#0e1733; border:1px solid var(--line); border-radius:8px; padding:6px 8px; }
+  .rowc b{ color:var(--gold); }
+  .frames{ display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px; max-height:360px; overflow:auto; }
+  .fr{ background:#0e1733; border:1px solid var(--line); border-radius:8px; padding:6px; font-size:12px; }
+  .fr canvas{ width:100%; height:80px; object-fit:contain; background:repeating-conic-gradient(#2a3b6a 0 25%,#223160 0 50%) 0 0/10px 10px; border-radius:6px; image-rendering:pixelated; }
+  .fr select{ font-size:12px; padding:3px 4px; margin-top:3px; }
+  .fr.off{ opacity:.45; }
+  .prev{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .pc{ background:repeating-conic-gradient(#2a3b6a 0 25%,#223160 0 50%) 0 0/14px 14px; border:1px solid var(--line); border-radius:8px; display:flex; flex-direction:column; align-items:center; padding:4px; }
+  .pc canvas{ image-rendering:pixelated; max-width:100%; } .pc small{ color:var(--muted); } .pc.miss small{ color:var(--bad); }
+  .bgGreen .pc,.bgGreen #outWrap{ background:#79c05a; }
+  .tabs{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; } .tabs button{ border:1px solid var(--line); background:#0e1733; color:#fff; border-radius:14px; padding:4px 12px; cursor:pointer; font:600 13px "Chakra Petch"; } .tabs button.on{ background:linear-gradient(#5d8ae8,#2c55b0); border-color:var(--gold); }
+  #outWrap{ overflow:auto; max-height:300px; border-radius:8px; background:repeating-conic-gradient(#2a3b6a 0 25%,#223160 0 50%) 0 0/16px 16px; }
+  #out{ display:block; image-rendering:pixelated; }
+  pre{ background:#0b1330; border:1px solid var(--line); border-radius:8px; padding:8px; font-size:12px; overflow:auto; white-space:pre-wrap; }
+  .note{ font-size:13px; color:var(--muted); line-height:1.6; }
+  .warn{ color:#ffd27a; }
+  @media (max-width:860px){ main{ grid-template-columns:1fr; } .rowc{ grid-template-columns:1fr 1fr; } .prev{ grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<header><h1>Sprite Importer</h1><p>นำ sprite sheet ที่วาดเองหรือสร้างจาก AI เข้าเกม Softnity: ลบพื้นหลัง ตัดเฟรมอัตโนมัติ กำหนดทิศและท่าทาง จัดขนาดให้เท้าอยู่ระดับเดียวกัน แล้วส่งออกเป็น PNG + JSON ที่เกมใช้ได้ทันที</p></header>
+<main>
+  <section class="panel" aria-label="ตั้งค่า">
+    <div class="step">1. เลือกภาพ</div>
+    <div id="drop" tabindex="0" role="button">ลากไฟล์ภาพมาวาง หรือแตะเพื่อเลือก<br><small>PNG / JPG / WebP</small></div>
+    <input type="file" id="file" accept="image/*" hidden>
+    <div class="step">2. ลบพื้นหลัง</div>
+    <div class="chk"><input type="checkbox" id="keyCorner" checked><label for="keyCorner">ลบสีพื้นจากมุมภาพ</label></div>
+    <label class="f" for="tol">ความใกล้เคียงสีพื้น <span id="tolV">30</span></label><input type="range" id="tol" min="0" max="90" value="30">
+    <div class="chk"><input type="checkbox" id="rmGray" checked><label for="rmGray">ลบสีเทา เส้นตาราง และตัวหนังสือ</label></div>
+    <label class="f" for="minH">ขนาดตัวละครขั้นต่ำ (พิกเซล)</label><input type="number" id="minH" value="30" min="8">
+    <button class="btn sec" id="detectBtn" disabled>ตรวจหาเฟรม</button>
+    <div class="step">3. จัดท่าทางและทิศ</div>
+    <div class="note">กำหนดทีละแถว แล้วแก้รายเฟรมได้ในรายการด้านขวา<br>ลำดับทิศใช้ตัวย่อ S SW W NW N NE E SE (S = หันหน้าเข้าหาจอ)</div>
+    <div class="chk"><input type="checkbox" id="mirror" checked><label for="mirror">ทิศที่ขาด ใช้ทิศตรงข้ามกลับด้าน</label></div>
+    <div class="chk"><input type="checkbox" id="fillS" checked><label for="fillS">ท่าที่ขาดทั้งหมด ใช้ท่ายืนแทน</label></div>
+    <div class="step">4. ขนาดผลลัพธ์</div>
+    <div class="row2"><div><label class="f" for="cw">ช่องกว้าง</label><input type="number" id="cw" value="128"></div><div><label class="f" for="ch">ช่องสูง</label><input type="number" id="ch" value="160"></div></div>
+    <label class="f" for="th">ความสูงตัวละคร (พิกเซล)</label><input type="number" id="th" value="140">
+    <div class="chk"><input type="checkbox" id="pixel" checked><label for="pixel">ภาพแนวพิกเซล (ขยายแบบคม)</label></div>
+    <div class="step">5. ส่งออก</div>
+    <label class="f" for="slot">ใช้กับ</label>
+    <select id="slot"><option value="Novice-f">Novice หญิง</option><option value="Novice-m">Novice ชาย</option><option value="Swordman-f">Swordman หญิง</option><option value="Swordman-m">Swordman ชาย</option><option value="Archer-f">Archer หญิง</option><option value="Archer-m">Archer ชาย</option><option value="Mage-f">Mage หญิง</option><option value="Mage-m">Mage ชาย</option></select>
+    <button class="btn" id="buildBtn" disabled>สร้าง sprite sheet</button>
+    <button class="btn sec" id="pngBtn" disabled>ดาวน์โหลด PNG</button>
+    <button class="btn sec" id="jsonBtn" disabled>ดาวน์โหลด JSON</button>
+    <div id="status" role="status">เลือกภาพเพื่อเริ่ม</div>
+  </section>
+  <section aria-label="พื้นที่ทำงาน">
+    <div class="card"><h2>ภาพต้นฉบับ <small style="color:var(--muted);font-weight:500">กรอบสีทอง = เฟรมที่ตรวจพบ</small></h2><div id="srcWrap"><canvas id="src" width="10" height="10"></canvas></div></div>
+    <div class="card"><h2>แถวที่ตรวจพบ</h2><div class="rows" id="rows"><span class="note">ยังไม่มี กดตรวจหาเฟรมก่อน</span></div></div>
+    <div class="card"><h2>เฟรมทั้งหมด</h2><div class="frames" id="frames"></div></div>
+    <div class="card"><h2>ตัวอย่างในเกม</h2>
+      <div class="tabs" id="animTabs"><button data-a="stand" class="on">ยืน</button><button data-a="walk">เดิน</button><button data-a="attack">โจมตี</button><button data-bg>พื้นหญ้า</button></div>
+      <div class="prev" id="prev"></div></div>
+    <div class="card"><h2>Sprite sheet ที่ได้</h2><div id="outWrap"><canvas id="out" width="10" height="10"></canvas></div><div class="note" id="outMeta"></div>
+      <details style="margin-top:8px"><summary class="note">วิธีนำเข้าเกม</summary><div class="note">
+        <b>ทาง ก (GitHub):</b> อัปโหลด PNG และ JSON ไว้ในโฟลเดอร์ <code>sprites/</code> ของ repo แล้วสร้างไฟล์ <code>sprites/manifest.json</code> ตามตัวอย่างด้านล่าง เกมจะโหลดตัวละครนี้อัตโนมัติ
+        <pre id="manifest"></pre>
+        <b>ทาง ข (ในเกม):</b> ตั้งค่า → ตัวละครจากไฟล์ → เลือก PNG และ JSON ที่ดาวน์โหลด (เก็บในเบราว์เซอร์นั้น)</div></details></div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const DIRS=['S','SW','W','NW','N','NE','E','SE'];
+const ANIMS=[['stand','ยืน'],['walk','เดิน'],['attack','โจมตี'],['skip','ไม่ใช้']];
+const MIRROR={ E:'W', W:'E', NE:'NW', NW:'NE', SE:'SW', SW:'SE', S:'S', N:'N' };
+let img=null, data=null, bgMask=null, W=0, H=0, frames=[], rows=[], result=null, prevTimer=null, curAnim='stand';
+// ---------- load ----------
+const drop=$('drop');
+drop.onclick=()=>$('file').click(); drop.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('file').click(); } };
+drop.ondragover=e=>{ e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave=()=>drop.classList.remove('over');
+drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files[0]) load(e.dataTransfer.files[0]); };
+$('file').onchange=e=>{ if(e.target.files[0]) load(e.target.files[0]); };
+function load(f){ const u=URL.createObjectURL(f); const im=new Image(); im.onload=()=>{ img=im; W=im.naturalWidth; H=im.naturalHeight; const cv=$('src'); cv.width=W; cv.height=H; cv.style.width=Math.min(W*1.5,1400)+'px';
+  const c=cv.getContext('2d'); c.drawImage(im,0,0); data=c.getImageData(0,0,W,H).data; $('detectBtn').disabled=false; status(`โหลดภาพ ${W}×${H} แล้ว กำลังตรวจหาเฟรม…`); detect(); }; im.src=u; }
+function status(t){ $('status').textContent=t; }
+$('tol').oninput=e=>{ $('tolV').textContent=e.target.value; }; ['tol','rmGray','keyCorner','minH'].forEach(id=>$(id).addEventListener('change',()=>img&&detect()));
+// ---------- background ----------
+function buildBg(){
+  const tol=+$('tol').value, rmG=$('rmGray').checked, useC=$('keyCorner').checked; bgMask=new Uint8Array(W*H);
+  const corners=[[1,1],[W-2,1],[1,H-2],[W-2,H-2]].map(([x,y])=>{ const i=(y*W+x)*4; return [data[i],data[i+1],data[i+2]]; });
+  for(let i=0,p=0;p<W*H;p++,i+=4){ const r=data[i],g=data[i+1],b=data[i+2],a=data[i+3]; if(a<20){ bgMask[p]=1; continue; }
+    if(useC&&corners.some(k=>Math.abs(k[0]-r)+Math.abs(k[1]-g)+Math.abs(k[2]-b)<=tol*1.5)){ bgMask[p]=1; continue; }
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b); if(rmG&&mx-mn<16&&mx>70&&mx<245) bgMask[p]=1; }
+}
+// ---------- detection (colored pixels, dilated, connected components) ----------
+function detect(){
+  buildBg(); const minH=+$('minH').value;
+  const col=new Uint8Array(W*H); for(let i=0,p=0;p<W*H;p++,i+=4){ if(bgMask[p]) continue; const r=data[i],g=data[i+1],b=data[i+2]; if(Math.max(r,g,b)-Math.min(r,g,b)>=14) col[p]=1; }
+  const R=3, dil=new Uint8Array(W*H);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){ if(!col[y*W+x]) continue; for(let dy=-R;dy<=R;dy++){ const yy=y+dy; if(yy<0||yy>=H) continue; for(let dx=-R;dx<=R;dx++){ const xx=x+dx; if(xx>=0&&xx<W) dil[yy*W+xx]=1; } } }
+  const lab=new Int32Array(W*H), boxes=[]; let id=0; const st=[];
+  for(let p=0;p<W*H;p++){ if(!dil[p]||lab[p]) continue; id++; let x0=1e9,y0=1e9,x1=-1,y1=-1; st.push(p); lab[p]=id;
+    while(st.length){ const q=st.pop(), x=q%W, y=(q/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      const nb=[q-1,q+1,q-W,q+W]; for(const n of nb){ if(n<0||n>=W*H||lab[n]||!dil[n]) continue; if((n%W===0&&q%W===W-1)||(q%W===0&&n%W===W-1)) continue; lab[n]=id; st.push(n); } }
+    if(y1-y0+1>=minH&&x1-x0+1>=8) boxes.push({x:x0+R,y:y0+R,w:x1-x0+1-2*R,h:y1-y0+1-2*R}); }
+  // rows: cluster by vertical overlap
+  boxes.sort((a,b)=>a.y-b.y); rows=[];
+  boxes.forEach(b=>{ const cy=b.y+b.h/2; let r=rows.find(r=>cy>r.y0&&cy<r.y1); if(!r){ r={y0:b.y,y1:b.y+b.h,items:[]}; rows.push(r); } r.items.push(b); r.y0=Math.min(r.y0,b.y); r.y1=Math.max(r.y1,b.y+b.h); });
+  rows.forEach(r=>r.items.sort((a,b)=>a.x-b.x));
+  frames=[]; rows.forEach((r,ri)=>r.items.forEach((b,ci)=>frames.push(Object.assign(b,{ row:ri, col:ci, anim:'stand', dir:'S', idx:0, cv:extract(b) }))));
+  guessRows(); drawSrc(); renderRows(); renderFrames(); $('buildBtn').disabled=!frames.length;
+  status(frames.length?`พบ ${frames.length} เฟรม ใน ${rows.length} แถว ตรวจการจัดทิศด้านขวา แล้วกด "สร้าง sprite sheet"`:'ไม่พบเฟรม ลองปรับความใกล้เคียงสีพื้นหรือขนาดขั้นต่ำ');
+  if(frames.length) build();
+}
+function extract(b){ // crop, clear background, keep the main blob and anything touching its box
+  const cv=document.createElement('canvas'); cv.width=b.w; cv.height=b.h; const c=cv.getContext('2d'); const id=c.createImageData(b.w,b.h);
+  const m=new Uint8Array(b.w*b.h);
+  for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){ const p=(b.y+y)*W+(b.x+x); if(p<0||p>=W*H||bgMask[p]) continue; m[y*b.w+x]=1; }
+  const lab=new Int32Array(b.w*b.h), comps=[]; let id2=0; const st=[];
+  for(let p=0;p<m.length;p++){ if(!m[p]||lab[p]) continue; id2++; let n=0,x0=1e9,y0=1e9,x1=-1,y1=-1; st.push(p); lab[p]=id2;
+    while(st.length){ const q=st.pop(), x=q%b.w, y=(q/b.w)|0; n++; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      for(const nn of [q-1,q+1,q-b.w,q+b.w]){ if(nn<0||nn>=m.length||lab[nn]||!m[nn]) continue; if(Math.abs((nn%b.w)-x)>1) continue; lab[nn]=id2; st.push(nn); } }
+    comps.push({id:id2,n,x0,y0,x1,y1}); }
+  const main=comps.sort((a,c)=>c.n-a.n)[0]; const keep=new Set();
+  if(main){ comps.forEach(k=>{ const ov=!(k.x1<main.x0-4||k.x0>main.x1+4||k.y1<main.y0-4||k.y0>main.y1+4); if(k===main||(ov&&k.n>=4)) keep.add(k.id); }); }
+  for(let p=0;p<m.length;p++){ if(!keep.has(lab[p])) continue; const x=p%b.w, y=(p/b.w)|0, s=((b.y+y)*W+(b.x+x))*4; id.data[p*4]=data[s]; id.data[p*4+1]=data[s+1]; id.data[p*4+2]=data[s+2]; id.data[p*4+3]=255; }
+  c.putImageData(id,0,0); return cv;
+}
+// ---------- row presets ----------
+function guessRows(){ const cnt={}; let seenStand=false, seenWalk=false;
+  rows.forEach((r,ri)=>{ const n=r.items.length;
+    if(n<3) r.anim='skip'; else if(n>=8&&!seenStand){ r.anim='stand'; seenStand=true; } else if(n>=8&&!seenWalk||n>=8&&rows[ri-1]&&rows[ri-1].anim==='walk'){ r.anim='walk'; seenWalk=true; } else r.anim='attack';
+    cnt[r.anim]=(cnt[r.anim]||0); r.idx=cnt[r.anim]++; r.order=n===8?'S SW W NW N NE E SE':n===6?'S SW W NW N NE':DIRS.slice(0,n).join(' '); applyRow(r,ri); }); }
+function applyRow(r,ri){ const ord=r.order.trim().split(/[\s,]+/).map(s=>s.toUpperCase()); r.items.forEach((b,ci)=>{ b.anim=r.anim; b.idx=r.idx; b.dir=DIRS.includes(ord[ci])?ord[ci]:'S'; }); }
+function renderRows(){ const box=$('rows'); if(!rows.length){ box.innerHTML='<span class="note">ไม่พบแถว</span>'; return; }
+  box.innerHTML=rows.map((r,ri)=>`<div class="rowc"><b>แถว ${ri+1}</b><select data-r="${ri}" data-k="anim" aria-label="ท่าของแถว ${ri+1}">${ANIMS.map(([v,n])=>`<option value="${v}" ${r.anim===v?'selected':''}>${n}</option>`).join('')}</select>
+    <input type="number" min="1" value="${r.idx+1}" data-r="${ri}" data-k="idx" aria-label="เฟรมที่" title="เฟรมที่"><input type="text" value="${r.order}" data-r="${ri}" data-k="order" aria-label="ลำดับทิศ" title="${r.items.length} เฟรม"></div>`).join('');
+  box.querySelectorAll('[data-r]').forEach(el=>el.onchange=()=>{ const r=rows[+el.dataset.r], k=el.dataset.k; r[k]=k==='idx'?Math.max(0,+el.value-1):el.value; applyRow(r); renderFrames(); drawSrc(); build(); }); }
+function renderFrames(){ const box=$('frames'); box.innerHTML='';
+  frames.forEach((f,i)=>{ const d=document.createElement('div'); d.className='fr'+(f.anim==='skip'?' off':''); const c=document.createElement('canvas'); c.width=f.cv.width; c.height=f.cv.height; c.getContext('2d').drawImage(f.cv,0,0); d.appendChild(c);
+    d.insertAdjacentHTML('beforeend',`<div>#${i+1}</div><select data-i="${i}" data-k="anim" aria-label="ท่าเฟรม ${i+1}">${ANIMS.map(([v,n])=>`<option value="${v}" ${f.anim===v?'selected':''}>${n}</option>`).join('')}</select>
+      <select data-i="${i}" data-k="dir" aria-label="ทิศเฟรม ${i+1}">${DIRS.map(v=>`<option ${f.dir===v?'selected':''}>${v}</option>`).join('')}</select><select data-i="${i}" data-k="idx" aria-label="ลำดับเฟรม ${i+1}">${[0,1,2,3,4,5,6,7].map(v=>`<option value="${v}" ${f.idx===v?'selected':''}>เฟรม ${v+1}</option>`).join('')}</select>`);
+    box.appendChild(d); });
+  box.querySelectorAll('[data-i]').forEach(el=>el.onchange=()=>{ const f=frames[+el.dataset.i], k=el.dataset.k; f[k]=k==='idx'?+el.value:el.value; renderFrames(); drawSrc(); build(); }); }
+function drawSrc(){ const c=$('src').getContext('2d'); c.clearRect(0,0,W,H); c.drawImage(img,0,0); c.lineWidth=2; c.font='bold 11px sans-serif';
+  frames.forEach((f,i)=>{ c.strokeStyle=f.anim==='skip'?'#ff8f8f':'#ffd060'; c.strokeRect(f.x+.5,f.y+.5,f.w,f.h); const t=`${i+1} ${f.anim==='skip'?'—':f.dir}`; c.fillStyle='rgba(10,16,34,.8)'; c.fillRect(f.x,f.y-13,c.measureText(t).width+6,13); c.fillStyle='#ffe38a'; c.fillText(t,f.x+3,f.y-3); }); }
+// ---------- build normalized sheet ----------
+function feetX(cv){ const c=cv.getContext('2d'), d=c.getImageData(0,0,cv.width,cv.height).data; let sx=0,n=0; const y0=Math.floor(cv.height*.78);
+  for(let y=y0;y<cv.height;y++)for(let x=0;x<cv.width;x++){ if(d[(y*cv.width+x)*4+3]>0){ sx+=x; n++; } } return n?sx/n:cv.width/2; }
+function build(){
+  if(!frames.length) return; const cw=+$('cw').value, ch=+$('ch').value, th=+$('th').value, px=$('pixel').checked;
+  const used=frames.filter(f=>f.anim!=='skip'); const st=used.filter(f=>f.anim==='stand'); const hs=(st.length?st:used).map(f=>f.h).sort((a,b)=>a-b); const med=hs[Math.floor(hs.length/2)]||1; const s=th/med;
+  const table={}; used.forEach(f=>{ (table[f.anim]=table[f.anim]||{}); (table[f.anim][f.dir]=table[f.anim][f.dir]||[]); table[f.anim][f.dir][f.idx]=f; });
+  const anims=['stand','walk','attack'].filter(a=>table[a]||$('fillS').checked);
+  const count=a=>{ let m=0; DIRS.forEach(d=>{ const l=table[a]&&table[a][d]; if(l) m=Math.max(m,l.length); }); return Math.max(1,m); };
+  const missing=[];
+  const cellFor=(a,d)=>{ let l=table[a]&&table[a][d], flip=false;
+    if((!l||!l.filter(Boolean).length)&&$('mirror').checked&&table[a]&&table[a][MIRROR[d]]&&table[a][MIRROR[d]].filter(Boolean).length){ l=table[a][MIRROR[d]]; flip=MIRROR[d]!==d; }
+    if((!l||!l.filter(Boolean).length)&&$('fillS').checked&&a!=='stand'){ const r=cellFor('stand',d); return r; }
+    if(!l||!l.filter(Boolean).length){ if(a==='stand'){ const any=DIRS.map(x=>table.stand&&table.stand[x]).find(v=>v&&v.filter(Boolean).length); if(any){ missing.push(`${a}:${d}`); return { list:any.filter(Boolean), flip:false, guess:true }; } } missing.push(`${a}:${d}`); return null; }
+    return { list:l.filter(Boolean), flip }; };
+  const layout=[]; anims.forEach(a=>{ const n=count(a); DIRS.forEach(d=>layout.push({a,d,n,cell:cellFor(a,d)})); });
+  const cols=Math.max(...layout.map(r=>r.n)), out=$('out'); out.width=cols*cw; out.height=layout.length*ch; const c=out.getContext('2d'); c.imageSmoothingEnabled=!px; c.clearRect(0,0,out.width,out.height);
+  const json={ frames:{}, animations:{}, meta:{ app:'Softnity Sprite Importer', image:'', size:{w:out.width,h:out.height}, cell:{w:cw,h:ch}, charH:th, baseline:ch-4, filter:px?'nearest':'linear', dirs:DIRS } };
+  layout.forEach((r,ri)=>{ if(!r.cell) return; const names=[]; for(let i=0;i<r.n;i++){ const f=r.cell.list[i%r.cell.list.length]; const w=f.cv.width*s, h=f.cv.height*s, fx=feetX(f.cv)*s;
+      const x=i*cw, y=ri*ch; c.save(); if(r.cell.flip){ c.translate(x+cw,0); c.scale(-1,1); c.drawImage(f.cv,cw/2-fx,y+ch-4-h,w,h); } else c.drawImage(f.cv,x+cw/2-fx,y+ch-4-h,w,h); c.restore();
+      const name=`${r.a}_${r.d}_${i}`; names.push(name); json.frames[name]={ frame:{x,y,w:cw,h:ch}, rotated:false, trimmed:false, spriteSourceSize:{x:0,y:0,w:cw,h:ch}, sourceSize:{w:cw,h:ch} }; }
+    json.animations[`${r.a}_${r.d}`]={ frames:names, frameRate:r.a==='walk'?8:r.a==='attack'?10:3, repeat:r.a==='attack'?0:-1 }; });
+  const slot=$('slot').value, base=`${slot.toLowerCase()}`; json.meta.image=base+'.png'; json.meta.slot=slot;
+  result={ json, base }; $('pngBtn').disabled=$('jsonBtn').disabled=false;
+  $('outMeta').innerHTML=`${out.width}×${out.height}px · ${layout.length} แถว (${anims.length} ท่า × 8 ทิศ) · ช่องละ ${cw}×${ch}`+(missing.length?`<br><span class="warn">ทิศที่ไม่มีภาพจริง (ใช้ภาพแทน): ${[...new Set(missing)].join(', ')}</span>`:'');
+  $('manifest').textContent=JSON.stringify({ [slot]:{ png:`sprites/${base}.png`, json:`sprites/${base}.json` } },null,2);
+  preview();
+}
+function preview(){ clearInterval(prevTimer); const box=$('prev'), out=$('out'), R=result; if(!R) return; box.innerHTML='';
+  const cw=R.json.meta.cell.w, ch=R.json.meta.cell.h, cells=DIRS.map(d=>{ const a=R.json.animations[`${curAnim}_${d}`]; const e=document.createElement('div'); e.className='pc'+(a?'':' miss'); const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; cv.style.height='140px'; e.appendChild(cv); e.insertAdjacentHTML('beforeend',`<small>${d}${a?'':' (ไม่มี)'}</small>`); box.appendChild(e); return {cv,a}; });
+  let f=0; const tick=()=>{ cells.forEach(({cv,a})=>{ const x=cv.getContext('2d'); x.imageSmoothingEnabled=!$('pixel').checked; x.clearRect(0,0,cw,ch); if(!a) return; const fr=R.json.frames[a.frames[f%a.frames.length]].frame; x.drawImage(out,fr.x,fr.y,fr.w,fr.h,0,0,cw,ch); }); f++; };
+  tick(); prevTimer=setInterval(tick,curAnim==='walk'?130:curAnim==='attack'?160:420); }
+$('animTabs').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; if(b.hasAttribute('data-bg')){ document.body.classList.toggle('bgGreen'); b.classList.toggle('on'); return; } curAnim=b.dataset.a; $('animTabs').querySelectorAll('[data-a]').forEach(x=>x.classList.toggle('on',x===b)); preview(); };
+['cw','ch','th','pixel','mirror','fillS','slot'].forEach(id=>$(id).addEventListener('change',()=>frames.length&&build()));
+$('detectBtn').onclick=detect; $('buildBtn').onclick=build;
+// ---------- export ----------
+let downloads=null; (async()=>{ try{ downloads=window.claude&&window.claude.use?await window.claude.use('downloads'):null; }catch(e){} })();
+async function save(name,data){ if(!downloads){ const blob=data instanceof Blob?data:new Blob([data],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); $('status').textContent=`ดาวน์โหลด ${name} แล้ว`; return; }
+  try{ await downloads.save({ filename:name, data }); status(`บันทึก ${name} แล้ว`); }catch(e){ status(e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไม่สำเร็จ ลองอีกครั้ง'); } }
+$('pngBtn').onclick=()=>result&&$('out').toBlob(b=>save(result.base+'.png',b),'image/png');
+$('jsonBtn').onclick=()=>result&&save(result.base+'.json',JSON.stringify(result.json));
+</script>
+</body>
+</html>

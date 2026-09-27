@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Softnity · Map Importer</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0f1a36; --line:#3a4f8a; --gold:#e8c170; --ink:#eef3ff; --muted:#9fb0d6; }
+  :root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); color-scheme:dark; }
+  *,*::before,*::after{ box-sizing:inherit; }
+  html,body{ margin:0; min-height:100%; background:radial-gradient(120% 80% at 50% 0%,#23407e,var(--bg) 60%); color:var(--ink); font-family:"Chakra Petch",system-ui,sans-serif; }
+  header{ padding:16px 20px 4px; } header h1{ margin:0; font:700 26px "Cinzel",serif; letter-spacing:2px; background:linear-gradient(180deg,#fffbe6,#ffe08a 50%,#c8862a); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header p{ margin:4px 0 0; color:var(--muted); font-size:14px; max-width:85ch; }
+  main{ display:grid; grid-template-columns:300px 1fr; gap:16px; padding:12px 20px 28px; align-items:start; }
+  .panel{ background:rgba(22,36,74,.92); border:1px solid var(--line); border-radius:12px; padding:14px; position:sticky; top:10px; max-height:calc(100vh - 20px); overflow:auto; }
+  .step{ font:700 13px "Chakra Petch"; color:var(--gold); margin:14px 0 6px; } .step:first-child{ margin-top:0; }
+  label.f{ display:block; font-size:13px; color:var(--muted); margin:8px 0 3px; }
+  input[type=number],select{ width:100%; font:inherit; font-size:14px; padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:#0b1330; color:#fff; }
+  input[type=range]{ width:100%; } input[type=file]{ font-size:12.5px; color:#dfe6fb; width:100%; }
+  .btn{ width:100%; margin-top:8px; padding:9px; border-radius:10px; border:0; cursor:pointer; font:700 14.5px "Chakra Petch"; color:#3a2410; background:linear-gradient(180deg,#fff3c0,#ffd060 45%,#e8962c); box-shadow:0 3px 0 #6b4414; }
+  .btn.sec{ color:#fff; background:linear-gradient(180deg,#4b78d8,#2c55b0); box-shadow:0 3px 0 #1c3470; }
+  .btn:disabled{ opacity:.45; cursor:default; } .btn:focus-visible,select:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  .tools{ display:grid; grid-template-columns:1fr 1fr; gap:6px; } .tools button{ border:1px solid var(--line); background:#0e1733; color:#fff; border-radius:8px; padding:7px 4px; cursor:pointer; font:600 13px "Chakra Petch"; }
+  .tools button.on{ background:linear-gradient(#5d8ae8,#2c55b0); border-color:var(--gold); }
+  .chk{ display:flex; gap:8px; align-items:center; font-size:13.5px; margin:6px 0; }
+  #status{ margin-top:10px; font-size:13px; color:var(--muted); min-height:18px; }
+  .card{ background:rgba(22,36,74,.92); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:14px; }
+  h2{ font:700 15px "Chakra Petch"; color:var(--gold); margin:0 0 8px; }
+  #wrap{ overflow:auto; max-height:72vh; border-radius:8px; background:#0b1330; }
+  #cv{ display:block; cursor:crosshair; touch-action:none; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:8px; } .legend i{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+  pre{ background:#0b1330; border:1px solid var(--line); border-radius:8px; padding:8px; font-size:12px; overflow:auto; white-space:pre-wrap; }
+  .note{ font-size:13px; color:var(--muted); line-height:1.6; } .warn{ color:#ffd27a; }
+  @media (max-width:860px){ main{ grid-template-columns:1fr; } .panel{ position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<header><h1>Map Importer</h1><p>นำภาพแผนที่ที่วาดเองหรือสร้างจาก AI มาเป็นเมืองในเกม: แบ่งช่อง กำหนดพื้นที่เดินได้/ไม่ได้ (อ่านจากภาพสีเขียว-แดงได้อัตโนมัติ) วางจุดเกิด ทางออก และ NPC แล้วทดลองเดินก่อนส่งออก</p></header>
+<main>
+  <section class="panel" aria-label="ตั้งค่า">
+    <div class="step">1. ภาพ</div>
+    <label class="f" for="bgFile">ภาพแผนที่ (ภาพสะอาด ใช้แสดงในเกม)</label><input type="file" id="bgFile" accept="image/*">
+    <label class="f" for="colFile">ภาพพื้นที่เดิน (เขียว = เดินได้, แดง = เดินไม่ได้) — ไม่ใส่ก็ได้</label><input type="file" id="colFile" accept="image/*">
+    <div class="step">2. ช่องตาราง</div>
+    <label class="f" for="tile">ขนาดช่อง (พิกเซลในภาพ) <span id="tileInfo"></span></label><input type="number" id="tile" value="16" min="4" max="128">
+    <label class="f" for="thr">ความเขียวขั้นต่ำของช่องที่เดินได้ <span id="thrV">55%</span></label><input type="range" id="thr" min="20" max="90" value="55">
+    <button class="btn sec" id="autoBtn" disabled>อ่านพื้นที่เดินจากสีอัตโนมัติ</button>
+    <div class="step">3. แก้ไข</div>
+    <div class="tools" id="tools" role="radiogroup" aria-label="เครื่องมือ">
+      <button data-t="walk" class="on">🟩 เดินได้</button><button data-t="block">🟥 เดินไม่ได้</button>
+      <button data-t="spawn">⭐ จุดเกิด</button><button data-t="exit">🌀 ทางออก</button>
+      <button data-t="npc">🧍 วาง NPC</button><button data-t="erase">🧽 ลบจุด</button>
+    </div>
+    <label class="f" for="brush">ขนาดแปรง</label><select id="brush"><option value="1">1 ช่อง</option><option value="2">2 ช่อง</option><option value="3" selected>3 ช่อง</option><option value="5">5 ช่อง</option></select>
+    <label class="f" for="npcSel">NPC ที่จะวาง</label>
+    <select id="npcSel"><option value="keeper">ผู้ดูแลการเดินทาง (วาร์ป/บันทึก)</option><option value="smith">ร้านอาวุธ</option><option value="armor">ร้านชุดเกราะ</option><option value="tool">ร้านของใช้</option><option value="inn">โรงเตี๊ยม</option><option value="storage">คลังสินค้า</option><option value="priest">นักบวช (โบสถ์)</option><option value="buyer">พ่อค้ารับซื้อ</option><option value="guildS">สมาคม Swordman</option><option value="guildA">สมาคม Archer</option><option value="guildM">สมาคม Mage</option><option value="knight">อัศวินหน้าปราสาท</option><option value="guard">ทหารยาม</option></select>
+    <label class="f" for="exitTo">ทางออกไปที่</label><select id="exitTo"><option value="f01">Everhaven Fields 01</option><option value="f02">Everhaven Fields 02</option><option value="">ยังไม่เปิด</option></select>
+    <div class="chk"><input type="checkbox" id="showGrid" checked><label for="showGrid">แสดงตาราง</label></div>
+    <label class="f" for="ovl">ความเข้มสีทับ</label><input type="range" id="ovl" min="0" max="80" value="35">
+    <div class="step">4. ทดลองเดิน</div>
+    <button class="btn sec" id="walkBtn" disabled>▶ ทดลองเดิน (WASD / ลูกศร)</button>
+    <div class="step">5. ส่งออก</div>
+    <button class="btn" id="jsonBtn" disabled>ดาวน์โหลด JSON แผนที่</button>
+    <button class="btn sec" id="pngBtn" disabled>ดาวน์โหลดภาพแผนที่</button>
+    <div id="status" role="status">เลือกภาพแผนที่เพื่อเริ่ม</div>
+  </section>
+  <section aria-label="พื้นที่ทำงาน">
+    <div class="card"><h2>แผนที่</h2><div id="wrap"><canvas id="cv" width="10" height="10" tabindex="0" aria-label="แผนที่ คลิกหรือลากเพื่อแก้ไข"></canvas></div>
+      <div class="legend"><span><i style="background:#5fe08a"></i>เดินได้</span><span><i style="background:#ff6b6b"></i>เดินไม่ได้</span><span>⭐ จุดเกิด</span><span>🌀 ทางออก</span><span>🧍 NPC</span><span id="count"></span></div></div>
+    <div class="card"><h2>นำเข้าเกม</h2><div class="note">
+      <b>ทาง ก (ในเกม):</b> ตั้งค่า → แผนที่เมืองจากไฟล์ → เลือกภาพแผนที่ + JSON → ใช้แผนที่นี้<br>
+      <b>ทาง ข (GitHub):</b> อัปโหลดไฟล์ไว้ในโฟลเดอร์ <code>maps/</code> แล้วสร้าง <code>maps/manifest.json</code>:
+      <pre id="manifest">{ "town": { "png": "maps/town.png", "json": "maps/town.json" } }</pre>
+      <span class="warn">แนะนำ:</span> ภาพแผนที่ควรกว้าง 2,000–4,000 พิกเซลขึ้นไปให้ภาพคม และ 1 ช่องตารางควรกว้างประมาณครึ่งหนึ่งของความสูงตัวละครในภาพ</div></div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let bg=null, col=null, cols=0, rows=0, tile=16, grid=[], spawn=null, exits=[], npcs={}, tool='walk', painting=false, test=null, keys={};
+const NPC_ICON={ keeper:'🧭', smith:'⚔️', armor:'🛡️', tool:'🧪', inn:'🛏️', storage:'📦', priest:'✝️', buyer:'💰', guildS:'🗡️', guildA:'🏹', guildM:'🔮', knight:'🏰', guard:'💂' };
+const loadImg=f=>new Promise(ok=>{ const im=new Image(); im.onload=()=>ok(im); im.src=URL.createObjectURL(f); });
+$('bgFile').onchange=async e=>{ if(!e.target.files[0]) return; bg=await loadImg(e.target.files[0]); bg._name=e.target.files[0].name; setup(); if(!col) autoDetect(); };
+$('colFile').onchange=async e=>{ if(!e.target.files[0]) return; col=await loadImg(e.target.files[0]); if(bg) autoDetect(); };
+$('tile').onchange=()=>{ if(bg){ setup(); autoDetect(); } };
+$('thr').oninput=e=>$('thrV').textContent=e.target.value+'%'; $('thr').onchange=()=>bg&&autoDetect();
+function setup(){ tile=Math.max(4,+$('tile').value); cols=Math.floor(bg.naturalWidth/tile); rows=Math.floor(bg.naturalHeight/tile);
+  grid=[...Array(rows)].map(()=>new Array(cols).fill(1)); spawn=[Math.floor(cols/2),Math.floor(rows/2)]; exits=[]; npcs={};
+  const cv=$('cv'); cv.width=cols*tile; cv.height=rows*tile; const disp=Math.max(1,Math.min(3,Math.floor(1400/cv.width*10)/10)); cv.style.width=(cv.width*Math.max(1,disp))+'px';
+  $('tileInfo').textContent=`→ ${cols}×${rows} ช่อง (ในเกม ${cols*32}×${rows*32} พิกเซล)`; ['autoBtn','walkBtn','jsonBtn','pngBtn'].forEach(id=>$(id).disabled=false); draw(); }
+function autoDetect(){ const src=col||bg; const c=document.createElement('canvas'); c.width=cols*tile; c.height=rows*tile; const x=c.getContext('2d'); x.drawImage(src,0,0,c.width,c.height);
+  const d=x.getImageData(0,0,c.width,c.height).data, thr=+$('thr').value/100;
+  for(let ty=0;ty<rows;ty++)for(let tx=0;tx<cols;tx++){ let g=0,n=0; for(let y=ty*tile;y<(ty+1)*tile;y+=2)for(let xx=tx*tile;xx<(tx+1)*tile;xx+=2){ const i=(y*c.width+xx)*4; n++; if(d[i+1]-d[i]>8) g++; } grid[ty][tx]=g/n>=thr?1:0; }
+  // put the spawn on the largest open area near the centre
+  let best=null; for(let r=0;r<Math.max(cols,rows);r++){ for(let dy=-r;dy<=r&&!best;dy++)for(let dx=-r;dx<=r&&!best;dx++){ const X=Math.floor(cols/2)+dx, Y=Math.floor(rows/2)+dy; if(grid[Y]&&grid[Y][X]) best=[X,Y]; } if(best) break; } spawn=best||spawn;
+  status(`อ่านพื้นที่เดินแล้ว (${col?'จากภาพพื้นที่เดิน':'จากสีของภาพแผนที่'}) ตรวจและแก้ด้วยแปรง แล้ววางจุดเกิด ทางออก และ NPC`); draw(); }
+function status(t){ $('status').textContent=t; }
+$('tools').onclick=e=>{ const b=e.target.closest('[data-t]'); if(!b) return; tool=b.dataset.t; $('tools').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); };
+['showGrid','ovl'].forEach(id=>$(id).addEventListener('input',draw));
+function cellAt(ev){ const cv=$('cv'), r=cv.getBoundingClientRect(); const x=Math.floor((ev.clientX-r.left)/r.width*cv.width/tile), y=Math.floor((ev.clientY-r.top)/r.height*cv.height/tile); return (x>=0&&y>=0&&x<cols&&y<rows)?[x,y]:null; }
+function apply(ev){ const c=cellAt(ev); if(!c) return; const [x,y]=c;
+  if(tool==='walk'||tool==='block'){ const b=+$('brush').value, h=Math.floor(b/2); for(let dy=-h;dy<=b-1-h;dy++)for(let dx=-h;dx<=b-1-h;dx++){ const X=x+dx, Y=y+dy; if(grid[Y]&&grid[Y][X]!==undefined) grid[Y][X]=tool==='walk'?1:0; } }
+  else if(tool==='spawn'){ spawn=[x,y]; grid[y][x]=1; }
+  else if(tool==='exit'){ exits=exits.filter(e=>Math.hypot(e.x-x,e.y-y)>1); exits.push({ x, y, to:$('exitTo').value }); grid[y][x]=1; }
+  else if(tool==='npc'){ npcs[$('npcSel').value]=[x,y]; grid[y][x]=1; }
+  else if(tool==='erase'){ exits=exits.filter(e=>!(e.x===x&&e.y===y)); Object.keys(npcs).forEach(k=>{ if(npcs[k][0]===x&&npcs[k][1]===y) delete npcs[k]; }); }
+  draw(); }
+const cv=$('cv');
+cv.addEventListener('pointerdown',e=>{ if(!bg||test) return; painting=tool==='walk'||tool==='block'; cv.setPointerCapture(e.pointerId); apply(e); });
+cv.addEventListener('pointermove',e=>{ if(painting) apply(e); });
+cv.addEventListener('pointerup',()=>painting=false);
+function draw(){ if(!bg) return; const c=cv.getContext('2d'), a=+$('ovl').value/100; c.clearRect(0,0,cv.width,cv.height); c.drawImage(bg,0,0,cols*tile,rows*tile);
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){ c.fillStyle=grid[y][x]?`rgba(95,224,138,${a})`:`rgba(255,90,90,${a})`; c.fillRect(x*tile,y*tile,tile,tile); }
+  if($('showGrid').checked){ c.strokeStyle='rgba(0,0,0,.18)'; c.lineWidth=1; c.beginPath(); for(let x=0;x<=cols;x++){ c.moveTo(x*tile+.5,0); c.lineTo(x*tile+.5,rows*tile); } for(let y=0;y<=rows;y++){ c.moveTo(0,y*tile+.5); c.lineTo(cols*tile,y*tile+.5); } c.stroke(); }
+  const icon=(t,x,y)=>{ c.font=`${Math.max(12,tile*1.1)}px sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(t,x*tile+tile/2,y*tile+tile/2); };
+  if(spawn) icon('⭐',spawn[0],spawn[1]); exits.forEach(e=>icon('🌀',e.x,e.y)); Object.entries(npcs).forEach(([k,[x,y]])=>icon(NPC_ICON[k]||'🧍',x,y));
+  if(test){ c.fillStyle='#ffd060'; c.beginPath(); c.arc(test.x*tile+tile/2,test.y*tile+tile/2,tile*.45,0,6.3); c.fill(); c.strokeStyle='#3a2410'; c.lineWidth=2; c.stroke(); }
+  const walk=grid.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0); $('count').textContent=`เดินได้ ${Math.round(walk/(cols*rows)*100)}% · ทางออก ${exits.length} · NPC ${Object.keys(npcs).length}`; }
+// walk test
+$('walkBtn').onclick=()=>{ if(test){ test=null; $('walkBtn').textContent='▶ ทดลองเดิน (WASD / ลูกศร)'; draw(); return; } test={ x:spawn[0], y:spawn[1] }; $('walkBtn').textContent='■ หยุดทดลองเดิน'; cv.focus(); draw(); status('ใช้ WASD หรือลูกศรเดิน ช่องสีแดงจะเดินผ่านไม่ได้'); };
+addEventListener('keydown',e=>{ if(!test) return; const m={ ArrowUp:[0,-1], KeyW:[0,-1], ArrowDown:[0,1], KeyS:[0,1], ArrowLeft:[-1,0], KeyA:[-1,0], ArrowRight:[1,0], KeyD:[1,0] }[e.code]; if(!m) return; e.preventDefault();
+  const X=test.x+m[0], Y=test.y+m[1]; if(grid[Y]&&grid[Y][X]){ test.x=X; test.y=Y; const ex=exits.find(q=>q.x===X&&q.y===Y); if(ex) status(`ถึงทางออก → ${ex.to||'ยังไม่เปิด'}`); } draw(); });
+// export
+let downloads=null; (async()=>{ try{ downloads=window.claude&&window.claude.use?await window.claude.use('downloads'):null; }catch(e){} })();
+async function save(name,data){ if(!downloads){ const blob=data instanceof Blob?data:new Blob([data],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); $('status').textContent=`ดาวน์โหลด ${name} แล้ว`; return; }
+  try{ await downloads.save({ filename:name, data }); status(`บันทึก ${name} แล้ว`); }catch(e){ status(e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไม่สำเร็จ ลองอีกครั้ง'); } }
+function mapJson(){ return { version:1, name:'town', image:'town.png', tilePx:tile, cols, rows, grid:grid.map(r=>r.join('')), spawn, exits, npcs }; }
+$('jsonBtn').onclick=()=>{ if(!exits.length&&!confirm('ยังไม่มีทางออก ผู้เล่นจะออกจากเมืองได้ด้วยการวาร์ปจากผู้ดูแลการเดินทางเท่านั้น ส่งออกต่อไหม')) return; save('town.json',JSON.stringify(mapJson())); };
+$('pngBtn').onclick=()=>{ const c=document.createElement('canvas'); c.width=cols*tile; c.height=rows*tile; c.getContext('2d').drawImage(bg,0,0,c.width,c.height); c.toBlob(b=>save('town.png',b),'image/png'); };
+</script>
+</body>
+</html>
